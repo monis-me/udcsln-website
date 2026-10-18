@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Udayic Solutions - Under Construction</title>
-    <!-- Cloudflare Turnstile Script -->
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <!-- Cloudflare Turnstile Script (Explicit Render) -->
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
     <style>
         /* Base Reset & White Theme */
         * {
@@ -32,7 +32,7 @@
         }
 
         .logo-container svg {
-            height: 40px; /* Adjust size here */
+            height: 40px;
             width: auto;
         }
 
@@ -83,13 +83,10 @@
             align-items: center;
         }
 
-        .turnstile-container {
+        /* Turnstile Container (Hidden initially) */
+        #turnstile-container {
             display: none;
             margin-bottom: 20px;
-        }
-
-        .turnstile-container.active {
-            display: block;
         }
 
         /* Form Styling */
@@ -100,10 +97,6 @@
             padding: 25px;
             border-radius: 8px;
             border: 1px solid #e0e0e0;
-        }
-
-        #contactForm.active {
-            display: block;
         }
 
         .form-group {
@@ -171,13 +164,11 @@
 </head>
 <body>
 
-    <!-- Top-Right Logo (Converted to Inline SVG) -->
+    <!-- Top-Right Logo (Inline SVG) -->
     <div class="logo-container">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 130" aria-label="Udayic Solutions Logo">
             <g fill="#4A4A4A" font-family="Arial, Helvetica, sans-serif" font-weight="normal">
-                <!-- Top Line: UDAYIC -->
                 <text x="250" y="60" font-size="72" text-anchor="middle" letter-spacing="12">UDAYIC</text>
-                <!-- Bottom Line: SOLUTIONS -->
                 <text x="250" y="120" font-size="52" text-anchor="middle" letter-spacing="18">SOLUTIONS</text>
             </g>
         </svg>
@@ -186,28 +177,19 @@
     <!-- Center Content -->
     <main class="main-content">
         
-        <!-- Central Construction Image -->
-        <img src="website-in-progress.png" alt="Website Under Construction" class="construction-image">
+        <!-- Central Construction Image (Embedded Base64 so it cannot break) -->
+        <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=" alt="Website Under Construction" class="construction-image" id="constructionImg">
 
         <!-- Contact Section -->
         <div class="contact-section">
             <button id="contactBtn" class="btn">Contact us</button>
             
-            <!-- Cloudflare Turnstile Widget -->
-            <div id="turnstileContainer" class="turnstile-container">
-                <!-- Replace YOUR_SITE_KEY with your actual Cloudflare Turnstile Site Key -->
-                <div class="cf-turnstile" 
-                     data-sitekey="0x4AAAAAAFaOzFr3sNQ9_usH" 
-                     data-callback="onTurnstileSuccess">
-                </div>
-            </div>
+            <!-- Cloudflare Turnstile Widget Container -->
+            <div id="turnstile-container"></div>
 
             <!-- The Form -->
-            <!-- Action points to FormSubmit.co, which forwards to hello@udayic.com -->
             <form id="contactForm" action="https://formsubmit.co/hello@udayic.com" method="POST">
-                
-                <!-- FormSubmit Configurations -->
-                <input type="hidden" name="_captcha" value="false"> <!-- We use Turnstile instead -->
+                <input type="hidden" name="_captcha" value="false">
                 <input type="hidden" name="_subject" value="New Lead from Udayic Website!">
                 <input type="hidden" name="_template" value="table">
 
@@ -228,13 +210,11 @@
                     </div>
                 </div>
 
-                <!-- Fields specific to Business -->
                 <div class="form-group hidden" id="companyNameGroup">
                     <label for="companyName">Company Name *</label>
                     <input type="text" id="companyName" name="Company Name">
                 </div>
 
-                <!-- Common Fields -->
                 <div class="form-group">
                     <label for="phone">Phone Number *</label>
                     <input type="tel" id="phone" name="Phone Number" required>
@@ -265,21 +245,40 @@
     <script>
         // 1. Get DOM elements
         const contactBtn = document.getElementById('contactBtn');
-        const turnstileContainer = document.getElementById('turnstileContainer');
+        const turnstileContainer = document.getElementById('turnstile-container');
         const contactForm = document.getElementById('contactForm');
+        let turnstileWidgetId = null;
 
-        // 2. Show Turnstile when "Contact us" is clicked
+        // 2. Since we can't load the actual image via text, we will load a placeholder
+        // Replace the Base64 placeholder with the actual image path if you host it,
+        // OR use the fallback below if the image file is in the same folder.
+        document.getElementById('constructionImg').src = 'website-in-progress.png';
+        document.getElementById('constructionImg').onerror = function() {
+             // If image fails to load, use a Base64 placeholder or display text
+             this.src = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='400'%3E%3Crect width='100%25' height='100%25' fill='%23f0f0f0'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='24' fill='%23333' dominant-baseline='middle' text-anchor='middle'%3EWebsite Under Construction%3C/text%3E%3C/svg%3E";
+        };
+
+        // 3. Initialize Turnstile only when the Contact button is clicked
         contactBtn.addEventListener('click', function() {
             contactBtn.style.display = 'none';
-            turnstileContainer.classList.add('active');
-        });
+            turnstileContainer.style.display = 'block';
 
-        // 3. Turnstile Callback (Passed verification)
-        window.onTurnstileSuccess = function(token) {
-            // Hide the turnstile and show the form
-            turnstileContainer.classList.remove('active');
-            contactForm.classList.add('active');
-        };
+            // Render the Turnstile explicitly
+            if (turnstileWidgetId === null) {
+                turnstileWidgetId = turnstile.render('#turnstile-container', {
+                    sitekey: '0x4AAAAAAFaOzFr3sNQ9_usH', // <-- PASTE YOUR CLOUDFLARE SITE KEY HERE
+                    theme: 'light',
+                    callback: function(token) {
+                        // This function ONLY runs when the human check is successfully passed
+                        turnstileContainer.style.display = 'none';
+                        contactForm.style.display = 'block';
+                    },
+                    'error-callback': function() {
+                        alert('Security check failed. Please refresh the page and try again.');
+                    }
+                });
+            }
+        });
 
         // 4. Dynamic Form Logic (Show/Hide Company Name)
         function toggleFormFields() {
@@ -293,7 +292,7 @@
             } else {
                 companyGroup.classList.add('hidden');
                 companyInput.removeAttribute('required');
-                companyInput.value = ''; // clear data if switched back
+                companyInput.value = '';
             }
         }
     </script>
