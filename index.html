@@ -41,7 +41,7 @@
         .contact-section { margin-top: 30px; width: 100%; max-width: 500px; display: flex; flex-direction: column; align-items: center; }
         
         /* Hidden by default until JS triggers them */
-        #turnstile-container { display: none; margin-bottom: 20px; min-height: 65px; /* Prevents layout jumping */ }
+        #turnstile-container { display: none; margin-bottom: 20px; min-height: 65px; }
         #contactForm { display: none; width: 100%; background: #f9f9f9; padding: 25px; border-radius: 8px; border: 1px solid #e0e0e0; }
         
         /* Form Styling */
@@ -59,6 +59,9 @@
         .phone-input-group { display: flex; gap: 10px; }
         .phone-input-group select { width: 40%; }
         .phone-input-group input { width: 60%; }
+        
+        /* Error Message Styling */
+        .error-msg { color: #d93025; font-size: 12px; margin-top: 5px; display: none; }
         
         .hidden { display: none !important; }
 
@@ -98,7 +101,7 @@
             <div id="turnstile-container"></div>
 
             <!-- Contact Form -->
-            <form id="contactForm" action="https://formsubmit.co/hello@udayic.com" method="POST">
+            <form id="contactForm" action="https://formsubmit.co/hello@udayic.com" method="POST" onsubmit="return validateFinalForm(event)">
                 <input type="hidden" name="_captcha" value="false">
                 <input type="hidden" name="_subject" value="New Lead from Udayic Website!">
                 <input type="hidden" name="_template" value="table">
@@ -121,11 +124,11 @@
                     <input type="text" id="companyName" name="Company Name">
                 </div>
 
-                <!-- Mobile Number with Country Dropdown -->
+                <!-- EXACT REQUEST: Country Code and Mobile Number -->
                 <div class="form-group">
-                    <label for="phone">Mobile Number *</label>
+                    <label for="mobileNumber">Mobile Number *</label>
                     <div class="phone-input-group">
-                        <select id="countryCode" name="Country Code" required onchange="updatePhoneValidation()">
+                        <select id="countryCode" name="Country Code" required onchange="updatePhoneRules()">
                             <option value="+91" data-digits="10" selected>🇮🇳 India (+91)</option>
                             <option value="+61" data-digits="9">🇦🇺 Australia (+61)</option>
                             <option value="+880" data-digits="10">🇧🇩 Bangladesh (+880)</option>
@@ -152,8 +155,10 @@
                             <option value="+44" data-digits="10">🇬🇧 UK (+44)</option>
                             <option value="+1" data-digits="10">🇺🇸 USA (+1)</option>
                         </select>
-                        <input type="tel" id="phone" name="Mobile Number" required placeholder="Enter mobile number">
+                        <!-- Input restricted to numbers only via JS -->
+                        <input type="tel" id="mobileNumber" name="Mobile Number" required placeholder="Enter mobile number" maxlength="11" oninput="restrictInput(this)">
                     </div>
+                    <div id="phoneError" class="error-msg"></div>
                 </div>
 
                 <div class="form-group">
@@ -189,12 +194,9 @@
             contactBtn.style.display = 'none';
             turnstileContainer.style.display = 'block';
 
-            // Robust check: waits for Cloudflare to be 100% ready
             let attempts = 0;
             const checkCloudflare = setInterval(function() {
                 attempts++;
-                
-                // If Cloudflare is loaded and we haven't rendered it yet
                 if (typeof turnstile !== 'undefined' && !isTurnstileRendered) {
                     clearInterval(checkCloudflare);
                     
@@ -202,7 +204,6 @@
                         sitekey: '0x4AAAAAAFaOzFr3sNQ9_usH', // <--- 🚨 ENSURE YOUR ACTUAL SITE KEY IS HERE 🚨
                         theme: 'light',
                         callback: function(token) {
-                            // This ONLY runs if the user successfully passes the human check
                             turnstileContainer.style.display = 'none';
                             contactForm.style.display = 'block';
                         },
@@ -212,17 +213,14 @@
                         }
                     });
                     isTurnstileRendered = true;
-                } 
-                // Failsafe: if it takes more than 5 seconds, stop trying
-                else if (attempts > 50) {
+                } else if (attempts > 50) {
                     clearInterval(checkCloudflare);
                     alert("Could not load security check. Please check your internet connection.");
                 }
             }, 100); 
         });
 
-        // --- 2. FORM LOGIC (Company Name & Phone Number) ---
-        
+        // --- 2. DYNAMIC FORM LOGIC ---
         function toggleFormFields() {
             const customerType = document.querySelector('input[name="Customer Type"]:checked').value;
             const companyGroup = document.getElementById('companyNameGroup');
@@ -238,29 +236,108 @@
             }
         }
 
-        // Phone Number Validation Logic
-        const phoneInput = document.getElementById('phone');
+        // --- 3. MOBILE NUMBER LOGIC ---
+        const mobileInput = document.getElementById('mobileNumber');
         const countrySelect = document.getElementById('countryCode');
+        const phoneError = document.getElementById('phoneError');
 
-        function updatePhoneValidation() {
-            // Get the required digits from the selected option's data attribute
+        // Restrict input to only numbers (prevents '0' at start via validation later)
+        function restrictInput(input) {
+            input.value = input.value.replace(/[^0-9]/g, ''); 
+        }
+
+        // Update max length dynamically based on country
+        function updatePhoneRules() {
             const selectedOption = countrySelect.options[countrySelect.selectedIndex];
             const maxDigits = selectedOption.getAttribute('data-digits');
             
-            // Update HTML5 validation attributes dynamically
-            phoneInput.setAttribute('minlength', maxDigits);
-            phoneInput.setAttribute('maxlength', maxDigits);
-            phoneInput.setAttribute('pattern', `\\d{${maxDigits}}`);
-            phoneInput.setAttribute('title', `Please enter exactly ${maxDigits} digits.`);
+            mobileInput.setAttribute('maxlength', maxDigits);
+            mobileInput.setAttribute('minlength', maxDigits);
             
-            // Clear existing input if it exceeds the new limit
-            if (phoneInput.value.length > maxDigits) {
-                phoneInput.value = phoneInput.value.slice(0, maxDigits);
+            // Clear validation error state when changing countries
+            phoneError.style.display = 'none';
+            mobileInput.style.borderColor = '#ccc';
+            if (mobileInput.value.length > maxDigits) {
+                mobileInput.value = mobileInput.value.slice(0, maxDigits);
             }
         }
 
-        // Initialize validation on page load (Defaults to India - 10 digits)
-        updatePhoneValidation();
+        // Custom validation specifically for India (and general fallback for others)
+        function validateMobileNumber() {
+            const selectedOption = countrySelect.options[countrySelect.selectedIndex];
+            const countryCode = selectedOption.value;
+            const requiredDigits = parseInt(selectedOption.getAttribute('data-digits'));
+            const val = mobileInput.value;
+
+            let isValid = true;
+            let errorMessage = "";
+
+            // 1. Basic Length Check
+            if (val.length !== requiredDigits) {
+                isValid = false;
+                errorMessage = `Please enter exactly ${requiredDigits} digits.`;
+            } 
+            // 2. Country Specific Rules
+            else if (countryCode === "+91") { // INDIA SPECIFIC RULES
+                
+                // Rule: Must start with 6, 7, 8, or 9
+                if (!/^[6-9]/.test(val)) {
+                    isValid = false;
+                    errorMessage = "Indian mobile numbers must start with 6, 7, 8, or 9.";
+                }
+                // Rule: Cannot be all identical digits (e.g., 9999999999)
+                else if (/^(\d)\1+$/.test(val)) {
+                    isValid = false;
+                    errorMessage = "Please enter a valid mobile number (repeating digits are not allowed).";
+                }
+            } 
+            // 3. General Rules for other countries
+            else {
+                // Prevent starting with 0 globally as requested
+                if (val.startsWith('0')) {
+                    isValid = false;
+                    errorMessage = "Mobile number cannot start with 0.";
+                }
+                // Prevent all repeating digits globally
+                else if (/^(\d)\1+$/.test(val)) {
+                    isValid = false;
+                    errorMessage = "Please enter a valid mobile number (repeating digits are not allowed).";
+                }
+            }
+
+            // Apply Visual Feedback
+            if (!isValid) {
+                phoneError.textContent = errorMessage;
+                phoneError.style.display = 'block';
+                mobileInput.style.borderColor = '#d93025';
+                return false;
+            } else {
+                phoneError.style.display = 'none';
+                mobileInput.style.borderColor = '#ccc';
+                return true;
+            }
+        }
+
+        // Trigger validation on typing (to clear errors) and on submit
+        mobileInput.addEventListener('input', function() {
+            if (phoneError.style.display === 'block') {
+                validateMobileNumber(); 
+            }
+        });
+
+        // --- 4. FINAL SUBMIT INTERCEPTOR ---
+        function validateFinalForm(event) {
+            // Prevent submission if mobile number is invalid
+            if (!validateMobileNumber()) {
+                event.preventDefault(); // Stop form submission
+                mobileInput.focus(); // Focus on the error field
+                return false;
+            }
+            return true; // Proceed with submission
+        }
+
+        // Initialize rules on load
+        updatePhoneRules();
     </script>
 </body>
 </html>
