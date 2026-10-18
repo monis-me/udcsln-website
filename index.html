@@ -272,9 +272,9 @@
             // Check for 5 or more consecutive repeating digits (e.g., 9477777678)
             if (/(\d)\1{4,}/.test(val)) return false;
 
-            // India Specific Rules (Must start with 7, 8, or 9)
+            // India Specific Rules (Must start with 6, 7, 8, or 9)
             if (countryCode === "+91") {
-                if (!/^[7-9]/.test(val)) return false;
+                if (!/^[6-9]/.test(val)) return false;
             } 
             // General Rule (Cannot start with 0)
             else {
@@ -292,7 +292,7 @@
             if (!isMobileValid()) {
                 event.preventDefault(); // Stop submission to FormSubmit
                 
-                // Show the generic error message you requested
+                // Show the generic error message
                 phoneError.textContent = "Kindly enter your real phone number";
                 phoneError.style.display = 'block';
                 mobileInput.style.borderColor = '#d93025';
