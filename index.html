@@ -41,18 +41,25 @@
         .contact-section { margin-top: 30px; width: 100%; max-width: 500px; display: flex; flex-direction: column; align-items: center; }
         
         /* Hidden by default until JS triggers them */
-        #turnstile-container { display: none; margin-bottom: 20px; }
+        #turnstile-container { display: none; margin-bottom: 20px; min-height: 65px; /* Prevents layout jumping */ }
         #contactForm { display: none; width: 100%; background: #f9f9f9; padding: 25px; border-radius: 8px; border: 1px solid #e0e0e0; }
         
         /* Form Styling */
         .form-group { margin-bottom: 15px; text-align: left; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; color: #333; }
-        .form-group input[type="text"], .form-group input[type="email"], .form-group input[type="tel"], .form-group textarea {
-            width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-family: inherit; font-size: 14px;
+        .form-group input[type="text"], .form-group input[type="email"], .form-group input[type="tel"], .form-group textarea, .form-group select {
+            width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-family: inherit; font-size: 14px; background-color: #fff;
         }
         .form-group textarea { resize: vertical; min-height: 80px; }
+        
         .radio-group { display: flex; gap: 15px; margin-top: 5px; }
         .radio-group label { font-weight: normal; display: flex; align-items: center; gap: 5px; cursor: pointer; }
+        
+        /* Phone Input Group (Side by side) */
+        .phone-input-group { display: flex; gap: 10px; }
+        .phone-input-group select { width: 40%; }
+        .phone-input-group input { width: 60%; }
+        
         .hidden { display: none !important; }
 
         /* Responsive */
@@ -60,6 +67,8 @@
             .logo-container { top: 15px; right: 15px; }
             .logo-container svg { height: 30px; }
             .main-content { padding-top: 80px; }
+            .phone-input-group { flex-direction: column; }
+            .phone-input-group select, .phone-input-group input { width: 100%; }
         }
     </style>
 </head>
@@ -78,7 +87,6 @@
     <main class="main-content">
         
         <!-- Image Section -->
-        <!-- FIXED: Pointing exactly to 'construction.png' as per your GitHub repository screenshot -->
         <div class="image-wrapper">
             <img src="construction.png" alt="Website Under Construction" class="construction-image">
         </div>
@@ -91,8 +99,7 @@
 
             <!-- Contact Form -->
             <form id="contactForm" action="https://formsubmit.co/hello@udayic.com" method="POST">
-                <!-- FormSubmit Settings -->
-                <input type="hidden" name="_captcha" value="false"> <!-- Using Turnstile instead -->
+                <input type="hidden" name="_captcha" value="false">
                 <input type="hidden" name="_subject" value="New Lead from Udayic Website!">
                 <input type="hidden" name="_template" value="table">
 
@@ -114,9 +121,39 @@
                     <input type="text" id="companyName" name="Company Name">
                 </div>
 
+                <!-- Mobile Number with Country Dropdown -->
                 <div class="form-group">
-                    <label for="phone">Phone Number *</label>
-                    <input type="tel" id="phone" name="Phone Number" required>
+                    <label for="phone">Mobile Number *</label>
+                    <div class="phone-input-group">
+                        <select id="countryCode" name="Country Code" required onchange="updatePhoneValidation()">
+                            <option value="+91" data-digits="10" selected>🇮🇳 India (+91)</option>
+                            <option value="+61" data-digits="9">🇦🇺 Australia (+61)</option>
+                            <option value="+880" data-digits="10">🇧🇩 Bangladesh (+880)</option>
+                            <option value="+55" data-digits="11">🇧🇷 Brazil (+55)</option>
+                            <option value="+1" data-digits="10">🇨🇦 Canada (+1)</option>
+                            <option value="+86" data-digits="11">🇨🇳 China (+86)</option>
+                            <option value="+33" data-digits="9">🇫🇷 France (+33)</option>
+                            <option value="+49" data-digits="11">🇩🇪 Germany (+49)</option>
+                            <option value="+62" data-digits="11">🇮🇩 Indonesia (+62)</option>
+                            <option value="+81" data-digits="10">🇯🇵 Japan (+81)</option>
+                            <option value="+60" data-digits="9">🇲🇾 Malaysia (+60)</option>
+                            <option value="+52" data-digits="10">🇲🇽 Mexico (+52)</option>
+                            <option value="+31" data-digits="9">🇳🇱 Netherlands (+31)</option>
+                            <option value="+64" data-digits="9">🇳🇿 New Zealand (+64)</option>
+                            <option value="+92" data-digits="10">🇵🇰 Pakistan (+92)</option>
+                            <option value="+63" data-digits="10">🇵🇭 Philippines (+63)</option>
+                            <option value="+65" data-digits="8">🇸🇬 Singapore (+65)</option>
+                            <option value="+27" data-digits="9">🇿🇦 South Africa (+27)</option>
+                            <option value="+82" data-digits="10">🇰🇷 South Korea (+82)</option>
+                            <option value="+34" data-digits="9">🇪🇸 Spain (+34)</option>
+                            <option value="+94" data-digits="9">🇱🇰 Sri Lanka (+94)</option>
+                            <option value="+41" data-digits="9">🇨🇭 Switzerland (+41)</option>
+                            <option value="+971" data-digits="9">🇦🇪 UAE (+971)</option>
+                            <option value="+44" data-digits="10">🇬🇧 UK (+44)</option>
+                            <option value="+1" data-digits="10">🇺🇸 USA (+1)</option>
+                        </select>
+                        <input type="tel" id="phone" name="Mobile Number" required placeholder="Enter mobile number">
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -140,6 +177,7 @@
     </main>
 
     <script>
+        // --- 1. CLOUDFLARE TURNSTILE LOGIC ---
         const contactBtn = document.getElementById('contactBtn');
         const turnstileContainer = document.getElementById('turnstile-container');
         const contactForm = document.getElementById('contactForm');
@@ -147,36 +185,44 @@
         let turnstileWidgetId = null;
         let isTurnstileRendered = false;
 
-        // Trigger Turnstile rendering only when the user clicks the button
         contactBtn.addEventListener('click', function() {
             contactBtn.style.display = 'none';
             turnstileContainer.style.display = 'block';
 
-            // Interval ensures Cloudflare script is fully loaded before rendering
+            // Robust check: waits for Cloudflare to be 100% ready
+            let attempts = 0;
             const checkCloudflare = setInterval(function() {
+                attempts++;
+                
+                // If Cloudflare is loaded and we haven't rendered it yet
                 if (typeof turnstile !== 'undefined' && !isTurnstileRendered) {
-                    clearInterval(checkCloudflare); // Stop checking
+                    clearInterval(checkCloudflare);
                     
-                    // Render the Turnstile Widget Explicitly
                     turnstileWidgetId = turnstile.render('#turnstile-container', {
                         sitekey: '0x4AAAAAAFaOzFr3sNQ9_usH', // <--- 🚨 ENSURE YOUR ACTUAL SITE KEY IS HERE 🚨
                         theme: 'light',
                         callback: function(token) {
-                            // ONLY executes if Cloudflare verifies the user is human
+                            // This ONLY runs if the user successfully passes the human check
                             turnstileContainer.style.display = 'none';
                             contactForm.style.display = 'block';
                         },
                         'error-callback': function(errorCode) {
                             console.error("Turnstile Error:", errorCode);
-                            alert('Security check failed to load. Please refresh the page and try again.');
+                            alert('Security check failed. Please refresh the page.');
                         }
                     });
                     isTurnstileRendered = true;
+                } 
+                // Failsafe: if it takes more than 5 seconds, stop trying
+                else if (attempts > 50) {
+                    clearInterval(checkCloudflare);
+                    alert("Could not load security check. Please check your internet connection.");
                 }
-            }, 100); // Check every 100ms
+            }, 100); 
         });
 
-        // Dynamic logic to show/hide Company Name field
+        // --- 2. FORM LOGIC (Company Name & Phone Number) ---
+        
         function toggleFormFields() {
             const customerType = document.querySelector('input[name="Customer Type"]:checked').value;
             const companyGroup = document.getElementById('companyNameGroup');
@@ -191,6 +237,30 @@
                 companyInput.value = '';
             }
         }
+
+        // Phone Number Validation Logic
+        const phoneInput = document.getElementById('phone');
+        const countrySelect = document.getElementById('countryCode');
+
+        function updatePhoneValidation() {
+            // Get the required digits from the selected option's data attribute
+            const selectedOption = countrySelect.options[countrySelect.selectedIndex];
+            const maxDigits = selectedOption.getAttribute('data-digits');
+            
+            // Update HTML5 validation attributes dynamically
+            phoneInput.setAttribute('minlength', maxDigits);
+            phoneInput.setAttribute('maxlength', maxDigits);
+            phoneInput.setAttribute('pattern', `\\d{${maxDigits}}`);
+            phoneInput.setAttribute('title', `Please enter exactly ${maxDigits} digits.`);
+            
+            // Clear existing input if it exceeds the new limit
+            if (phoneInput.value.length > maxDigits) {
+                phoneInput.value = phoneInput.value.slice(0, maxDigits);
+            }
+        }
+
+        // Initialize validation on page load (Defaults to India - 10 digits)
+        updatePhoneValidation();
     </script>
 </body>
 </html>
