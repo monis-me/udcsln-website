@@ -4,151 +4,192 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>UDAYIC Solutions - Under Construction</title>
-  
+  <script src="https://cdn.tailwindcss.com"></script>
   <!-- Cloudflare Turnstile API -->
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
     body {
+      font-family: 'Inter', sans-serif;
       background-color: #0b132b;
-      color: #ffffff;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-      position: relative;
+    }
+    
+    .bg-grid {
+      background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+      background-size: 24px 24px;
     }
 
-    /* Top-Right Logo (Logo_1.PNG) */
-    .top-right-logo {
-      position: absolute;
-      top: 20px;
-      right: 25px;
-      max-width: 130px;
-      height: auto;
-      z-index: 10;
-      background: rgba(255, 255, 255, 0.95);
-      padding: 8px 12px;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    @keyframes craneMove {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(-3deg); }
+    }
+    
+    @keyframes wheelRotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
     }
 
-    /* Main Card */
-    .card {
-      background-color: #1c2541;
-      border-radius: 16px;
-      padding: 24px;
-      max-width: 720px;
-      width: 100%;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-      text-align: center;
+    .animate-crane {
+      transform-origin: 180px 220px;
+      animation: craneMove 8s ease-in-out infinite;
     }
 
-    /* Construction Image Overlay Wrapper */
-    .image-container {
-      position: relative;
-      width: 100%;
-      border-radius: 12px;
-      overflow: hidden;
-      background: #151c33;
-    }
-
-    .main-banner {
-      width: 100%;
-      height: auto;
-      display: block;
-    }
-
-    /* Overlay Name_1.PNG on the boundary wall */
-    .wall-sign {
-      position: absolute;
-      bottom: 28%;
-      right: 7%;
-      width: 25%;
-      height: auto;
-      max-width: 160px;
-      background: rgba(255, 255, 255, 0.95);
-      padding: 6px 10px;
-      border-radius: 6px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.6);
-      object-fit: contain;
-      z-index: 5;
-    }
-
-    /* Action / Turnstile Section */
-    .contact-wrapper {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 15px;
-      margin-top: 24px;
-      min-height: 80px;
-    }
-
-    .btn-contact {
-      background-color: #0088cc;
-      color: #ffffff;
-      border: none;
-      padding: 12px 28px;
-      font-size: 1rem;
-      font-weight: 600;
-      border-radius: 8px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      transition: background-color 0.2s ease, transform 0.1s ease;
-    }
-
-    .btn-contact:hover {
-      background-color: #0077b5;
-      transform: translateY(-1px);
-    }
-
-    .hidden {
-      display: none !important;
+    .animate-spin-slow {
+      transform-origin: center;
+      animation: wheelRotate 10s linear infinite;
     }
   </style>
 </head>
-<body>
+<body class="bg-grid min-h-screen text-white flex flex-col justify-center items-center p-4 sm:p-6 relative overflow-x-hidden">
 
-  <!-- Top Right Logo -->
-  <img src="Logo_1.PNG" alt="UDAYIC Logo" class="top-right-logo">
+  <!-- Top Right Logo (Logo_1.PNG / Logo Badge) -->
+  <div class="absolute top-4 right-4 sm:top-6 sm:right-6 z-20">
+    <div class="bg-white px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl shadow-xl border border-slate-200 flex items-center gap-2.5 hover:shadow-2xl transition-all">
+      <img src="Logo_1.PNG" alt="UDAYIC Logo" class="h-8 sm:h-10 w-auto object-contain" onerror="this.style.display='none'; document.getElementById('fallback-logo-svg').classList.remove('hidden');" />
+      
+      <!-- Built-in SVG Fallback if Logo_1.PNG fails to load -->
+      <svg id="fallback-logo-svg" class="hidden w-8 h-8 sm:w-10 sm:h-10" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <g stroke="#F59E0B" stroke-width="4" stroke-linecap="round">
+          <line x1="50" y1="12" x2="50" y2="22" />
+          <line x1="26" y1="22" x2="33" y2="29" />
+          <line x1="74" y1="22" x2="67" y2="29" />
+          <line x1="16" y1="46" x2="25" y2="46" />
+          <line x1="84" y1="46" x2="75" y2="46" />
+        </g>
+        <circle cx="50" cy="46" r="18" fill="#FBBF24" />
+        <path d="M 25 50 Q 50 30 75 50 L 70 65 Q 50 50 30 65 Z" fill="#1E3A8A" stroke="#3B82F6" stroke-width="1.5" />
+        <path d="M 45 78 C 30 75 25 58 45 52 C 65 52 75 68 70 80 C 60 85 50 82 45 78 Z" fill="#10B981" />
+        <rect x="68" y="60" width="16" height="24" rx="2" fill="#059669" stroke="#FFFFFF" stroke-width="1.5" />
+      </svg>
+      
+      <div class="flex flex-col leading-tight">
+        <span class="font-extrabold text-xs sm:text-sm text-slate-900 tracking-wider">UDAYIC</span>
+        <span class="font-bold text-[9px] sm:text-[10px] text-emerald-600 tracking-widest uppercase">SOLUTIONS</span>
+      </div>
+    </div>
+  </div>
 
-  <div class="card">
+  <!-- Central Card -->
+  <main class="w-full max-w-2xl bg-[#1c2541] rounded-2xl p-4 sm:p-6 shadow-2xl border border-slate-700/50 my-auto relative z-10">
     
-    <!-- Construction Banner Image & Boundary Wall Overlay -->
-    <div class="image-container">
-      <img src="website-in-progress.png" alt="Construction Site" class="main-banner">
-      <!-- Name_1.PNG on the wall -->
-      <img src="Name_1.PNG" alt="UDAYIC Solutions" class="wall-sign">
+    <!-- Embedded Self-Contained Vector Construction Scene -->
+    <div class="relative w-full rounded-xl overflow-hidden bg-slate-900/90 border border-slate-700 shadow-inner">
+      <svg class="w-full h-auto min-h-[220px] sm:min-h-[280px]" viewBox="0 0 600 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#0F172A" />
+            <stop offset="100%" stop-color="#1E293B" />
+          </linearGradient>
+        </defs>
+
+        <!-- Sky background -->
+        <rect width="600" height="320" fill="url(#skyGrad)" />
+        
+        <!-- Stars -->
+        <circle cx="80" cy="40" r="1.5" fill="#94A3B8" />
+        <circle cx="220" cy="30" r="1.5" fill="#64748B" />
+        <circle cx="480" cy="50" r="2" fill="#94A3B8" />
+
+        <!-- Ground horizon -->
+        <rect x="0" y="270" width="600" height="50" fill="#0F172A" />
+        <line x1="0" y1="270" x2="600" y2="270" stroke="#334155" stroke-width="2" />
+
+        <!-- Scaffolding (Left) -->
+        <g stroke="#64748B" stroke-width="1.5">
+          <line x1="40" y1="130" x2="40" y2="270" />
+          <line x1="80" y1="130" x2="80" y2="270" />
+          <line x1="120" y1="130" x2="120" y2="270" />
+          <line x1="40" y1="160" x2="120" y2="160" />
+          <line x1="40" y1="195" x2="120" y2="195" />
+          <line x1="40" y1="230" x2="120" y2="230" />
+          <line x1="40" y1="160" x2="80" y2="195" />
+          <line x1="80" y1="160" x2="40" y2="195" />
+          <line x1="80" y1="195" x2="120" y2="230" />
+          <line x1="120" y1="195" x2="80" y2="230" />
+        </g>
+        <rect x="35" y="190" width="90" height="5" fill="#9A3412" rx="1" />
+        <rect x="35" y="225" width="90" height="5" fill="#9A3412" rx="1" />
+
+        <!-- Construction Worker on Scaffolding -->
+        <g stroke="#F8FAFC" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+          <circle cx="70" cy="172" r="5" stroke-width="2" />
+          <path d="M 63 170 Q 70 164 77 170 Z" fill="#F59E0B" stroke="#F59E0B" stroke-width="1" />
+          <line x1="70" y1="177" x2="70" y2="188" />
+          <line x1="70" y1="180" x2="62" y2="175" />
+          <line x1="70" y1="180" x2="78" y2="173" />
+          <line x1="70" y1="188" x2="65" y2="195" />
+          <line x1="70" y1="188" x2="75" y2="195" />
+        </g>
+
+        <!-- Tower Crane -->
+        <g class="animate-crane">
+          <path d="M 170 270 L 170 120 L 190 120 L 190 270" stroke="#F59E0B" stroke-width="2" fill="none" />
+          <path d="M 170 120 L 190 140 M 170 140 L 190 160 M 170 160 L 190 180 M 170 180 L 190 200 M 170 200 L 190 220" stroke="#F59E0B" stroke-width="1.5" />
+          <line x1="110" y1="120" x2="280" y2="120" stroke="#F59E0B" stroke-width="3" />
+          <polygon points="175,95 170,120 190,120" fill="#F59E0B" />
+          <line x1="175" y1="95" x2="120" y2="120" stroke="#94A3B8" stroke-width="1" />
+          <line x1="175" y1="95" x2="260" y2="120" stroke="#94A3B8" stroke-width="1" />
+          <line x1="250" y1="120" x2="250" y2="170" stroke="#CBD5E1" stroke-width="1.5" stroke-dasharray="3 2" />
+          <rect x="242" y="170" width="16" height="14" fill="#3B82F6" rx="2" />
+        </g>
+
+        <!-- Excavator -->
+        <g>
+          <rect x="210" y="252" width="70" height="18" rx="8" fill="#1E293B" stroke="#475569" stroke-width="2" />
+          <circle cx="222" cy="261" r="5" fill="#64748B" class="animate-spin-slow" />
+          <circle cx="245" cy="261" r="5" fill="#64748B" class="animate-spin-slow" />
+          <circle cx="268" cy="261" r="5" fill="#64748B" class="animate-spin-slow" />
+          <path d="M 220 252 L 225 225 L 260 225 L 265 252 Z" fill="#F59E0B" />
+          <rect x="230" y="230" width="15" height="12" fill="#38BDF8" rx="1" opacity="0.8" />
+          <path d="M 255 235 L 285 210 L 305 240 L 315 255" stroke="#F59E0B" stroke-width="5" stroke-linecap="round" fill="none" />
+          <path d="M 310 250 L 325 255 L 320 268 L 305 262 Z" fill="#78350F" />
+        </g>
+
+        <!-- Wooden Boundary Fence -->
+        <g id="woodenFence">
+          <rect x="390" y="225" width="200" height="8" fill="#78350F" rx="1" />
+          <rect x="390" y="250" width="200" height="8" fill="#78350F" rx="1" />
+          <path d="M 400 270 L 400 210 L 408 202 L 416 210 L 416 270 Z" fill="#9A3412" stroke="#451A03" stroke-width="1" />
+          <path d="M 425 270 L 425 210 L 433 202 L 441 210 L 441 270 Z" fill="#9A3412" stroke="#451A03" stroke-width="1" />
+          <path d="M 450 270 L 450 210 L 458 202 L 466 210 L 466 270 Z" fill="#9A3412" stroke="#451A03" stroke-width="1" />
+          <path d="M 475 270 L 475 210 L 483 202 L 491 210 L 491 270 Z" fill="#9A3412" stroke="#451A03" stroke-width="1" />
+          <path d="M 500 270 L 500 210 L 508 202 L 516 210 L 516 270 Z" fill="#9A3412" stroke="#451A03" stroke-width="1" />
+          <path d="M 525 270 L 525 210 L 533 202 L 541 210 L 541 270 Z" fill="#9A3412" stroke="#451A03" stroke-width="1" />
+          <path d="M 550 270 L 550 210 L 558 202 L 566 210 L 566 270 Z" fill="#9A3412" stroke="#451A03" stroke-width="1" />
+        </g>
+      </svg>
+
+      <!-- Overlay Sign on Boundary Wall (Name_1.PNG with clean SVG fallback) -->
+      <div class="absolute bottom-[18%] right-[5%] sm:right-[7%] z-10 transform hover:scale-105 transition-transform">
+        <div class="bg-white/95 backdrop-blur px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg shadow-2xl border border-slate-300 flex items-center justify-center min-w-[130px] sm:min-w-[160px]">
+          <img src="Name_1.PNG" alt="UDAYIC Solutions" class="max-h-8 sm:max-h-10 w-auto object-contain" onerror="this.style.display='none'; document.getElementById('fallback-name-sign').classList.remove('hidden');" />
+          
+          <div id="fallback-name-sign" class="hidden text-center">
+            <div class="font-black text-xs sm:text-sm text-slate-900 tracking-wider">UDAYIC</div>
+            <div class="font-extrabold text-[8px] sm:text-[10px] text-emerald-600 tracking-widest uppercase">SOLUTIONS</div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- Secure Contact Area -->
-    <div class="contact-wrapper">
+    <!-- Contact Action Area -->
+    <div class="mt-6 sm:mt-8 flex flex-col items-center justify-center min-h-[80px]">
       
-      <!-- User Initiated "Contact us" Button -->
-      <button id="contactBtn" class="btn-contact" onclick="initiateVerification()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-          <polyline points="22,6 12,13 2,6"></polyline>
+      <!-- 'Contact us' Button -->
+      <button 
+        id="contactBtn" 
+        onclick="initiateVerification()"
+        class="inline-flex items-center justify-center gap-2.5 bg-sky-600 hover:bg-sky-500 text-white font-semibold text-base px-7 py-3 rounded-xl shadow-lg shadow-sky-600/25 transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
         </svg>
-        Contact us
+        <span>Contact us</span>
       </button>
 
-      <!-- Turnstile Widget (Appears ONLY on click) -->
-      <div id="turnstileBox" class="hidden">
+      <!-- Cloudflare Turnstile Widget (Hidden until button click) -->
+      <div id="turnstileBox" class="hidden my-2">
         <div class="cf-turnstile" 
-             data-sitekey="0x4AAAAAAFaOzFr3sNQ9_usH" 
+             data-sitekey="YOUR_TURNSTILE_SITE_KEY_HERE" 
              data-callback="onTurnstileSuccess"
              data-execution="render">
         </div>
@@ -156,7 +197,7 @@
 
     </div>
 
-  </div>
+  </main>
 
   <script>
     function initiateVerification() {
@@ -169,11 +210,8 @@
 
       const u = "contact";
       const d = "udayic.com";
-      const targetMail = u + "@" + d;
-
-      window.location.href = "mailto:" + targetMail;
+      window.location.href = `mailto:${u}@${d}`;
     }
   </script>
-
 </body>
 </html>
