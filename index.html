@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UDAYIC — Under Construction</title>
+    <!-- Cloudflare Turnstile API -->
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .card {
+            max-width: 650px;
+            width: 100%;
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+        .banner-img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        h1 { font-size: 2rem; margin-bottom: 10px; color: #38bdf8; }
+        p { font-size: 1rem; color: #94a3b8; margin-bottom: 20px; line-height: 1.5; }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #0284c7;
+            color: #ffffff;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+        .btn:hover { background: #0369a1; }
+        .turnstile-wrapper {
+            margin-top: 20px;
+            display: none;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <!-- Construction Image -->
+        <img src="construction.png" alt="Website Under Construction" class="banner-img">
+        
+        <h1>UDAYIC</h1>
+        <p>Our website is currently under progress. We are working hard to bring you something amazing!</p>
+        
+        <!-- Contact Button with Email Icon -->
+        <button id="open-turnstile-btn" class="btn">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+            Contact Enquiries
+        </button>
+
+        <!-- Anti-Bot Turnstile Widget -->
+        <div id="turnstile-container" class="turnstile-wrapper">
+            <!-- Apni Cloudflare Site Key yahan 'data-sitekey' mein daalein -->
+            <div class="cf-turnstile" data-sitekey="1x00000000000000000000AA" data-callback="onTurnstileSuccess"></div>
+        </div>
+    </div>
+
+    <script>
+        const btn = document.getElementById('open-turnstile-btn');
+        const container = document.getElementById('turnstile-container');
+
+        // Show CAPTCHA when button is clicked
+        btn.addEventListener('click', function() {
+            btn.style.display = 'none';
+            container.style.display = 'flex';
+        });
+
+        // Automatically opens email when human verification succeeds
+        function onTurnstileSuccess(token) {
+            let user = "enquiries";
+            let domain = "udayic.com";
+            window.location.href = "mailto:" + user + "@" + domain;
+        }
+    </script>
+</body>
+</html>
