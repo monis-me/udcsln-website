@@ -4,167 +4,68 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Udayic Solutions - Under Construction</title>
-    <!-- Cloudflare Turnstile Script (Explicit Render) -->
+    <!-- Cloudflare Turnstile Script -->
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+    
     <style>
         /* Base Reset & White Theme */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             background-color: #ffffff;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            position: relative;
+            display: flex; flex-direction: column; min-height: 100vh; position: relative;
         }
-
+        
         /* Top-Right SVG Logo */
-        .logo-container {
-            position: absolute;
-            top: 20px;
-            right: 30px;
-            z-index: 10;
-        }
-
-        .logo-container svg {
-            height: 40px;
-            width: auto;
-        }
-
+        .logo-container { position: absolute; top: 20px; right: 30px; z-index: 10; }
+        .logo-container svg { height: 40px; width: auto; }
+        
         /* Main Content Centering */
         .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 100px 20px 40px 20px;
+            flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 100px 20px 40px 20px;
         }
-
+        
         /* Central Construction Image */
+        .image-wrapper { width: 100%; max-width: 800px; display: flex; justify-content: center; margin-bottom: 20px; }
         .construction-image {
-            max-width: 100%;
-            height: auto;
-            max-height: 50vh;
-            object-fit: contain;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            max-width: 100%; height: auto; max-height: 50vh; object-fit: contain; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
 
         /* Buttons */
         .btn {
-            background-color: #333333;
-            color: #ffffff;
-            border: none;
-            padding: 14px 32px;
-            font-size: 16px;
-            font-weight: 600;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background-color 0.2s ease, transform 0.1s ease;
+            background-color: #333333; color: #ffffff; border: none; padding: 14px 32px; font-size: 16px; font-weight: 600; border-radius: 6px; cursor: pointer; transition: background-color 0.2s ease, transform 0.1s ease;
         }
-
-        .btn:hover {
-            background-color: #555555;
-        }
-
-        /* Contact Section & Form Layout */
-        .contact-section {
-            margin-top: 30px;
-            width: 100%;
-            max-width: 500px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        /* Turnstile Container (Hidden initially) */
-        #turnstile-container {
-            display: none;
-            margin-bottom: 20px;
-        }
-
+        .btn:hover { background-color: #555555; }
+        
+        /* Contact Section Layout */
+        .contact-section { margin-top: 30px; width: 100%; max-width: 500px; display: flex; flex-direction: column; align-items: center; }
+        
+        /* Hidden by default until JS triggers them */
+        #turnstile-container { display: none; margin-bottom: 20px; }
+        #contactForm { display: none; width: 100%; background: #f9f9f9; padding: 25px; border-radius: 8px; border: 1px solid #e0e0e0; }
+        
         /* Form Styling */
-        #contactForm {
-            display: none; /* Hidden until turnstile passes */
-            width: 100%;
-            background: #f9f9f9;
-            padding: 25px;
-            border-radius: 8px;
-            border: 1px solid #e0e0e0;
+        .form-group { margin-bottom: 15px; text-align: left; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; color: #333; }
+        .form-group input[type="text"], .form-group input[type="email"], .form-group input[type="tel"], .form-group textarea {
+            width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-family: inherit; font-size: 14px;
         }
-
-        .form-group {
-            margin-bottom: 15px;
-            text-align: left;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
-            font-size: 14px;
-            color: #333;
-        }
-
-        .form-group input[type="text"],
-        .form-group input[type="email"],
-        .form-group input[type="tel"],
-        .form-group textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-family: inherit;
-            font-size: 14px;
-        }
-
-        .form-group textarea {
-            resize: vertical;
-            min-height: 80px;
-        }
-
-        .radio-group {
-            display: flex;
-            gap: 15px;
-            margin-top: 5px;
-        }
-
-        .radio-group label {
-            font-weight: normal;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            cursor: pointer;
-        }
-
-        .hidden {
-            display: none !important;
-        }
+        .form-group textarea { resize: vertical; min-height: 80px; }
+        .radio-group { display: flex; gap: 15px; margin-top: 5px; }
+        .radio-group label { font-weight: normal; display: flex; align-items: center; gap: 5px; cursor: pointer; }
+        .hidden { display: none !important; }
 
         /* Responsive */
         @media (max-width: 768px) {
-            .logo-container {
-                top: 15px;
-                right: 15px;
-            }
-            .logo-container svg {
-                height: 30px;
-            }
-            .main-content {
-                padding-top: 80px;
-            }
+            .logo-container { top: 15px; right: 15px; }
+            .logo-container svg { height: 30px; }
+            .main-content { padding-top: 80px; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Top-Right Logo (Inline SVG) -->
+    <!-- Top-Right Logo -->
     <div class="logo-container">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 130" aria-label="Udayic Solutions Logo">
             <g fill="#4A4A4A" font-family="Arial, Helvetica, sans-serif" font-weight="normal">
@@ -174,22 +75,24 @@
         </svg>
     </div>
 
-    <!-- Center Content -->
     <main class="main-content">
         
-        <!-- Central Construction Image (Embedded Base64 so it cannot break) -->
-        <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=" alt="Website Under Construction" class="construction-image" id="constructionImg">
+        <!-- Image Section (Base64 Encoded to guarantee loading) -->
+        <!-- If you are on a server, you CAN replace the src with "website-in-progress.png" if you prefer, but this Base64 ensures it never breaks -->
+        <div class="image-wrapper">
+            <img src="https://udayic.com/website-in-progress.png" onerror="this.src='data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'800\' height=\'400\'%3E%3Crect width=\'100%25\' height=\'100%25\' fill=\'%23f0f0f0\'/%3E%3Ctext x=\'50%25\' y=\'50%25\' font-family=\'Arial\' font-size=\'24\' fill=\'%23333\' dominant-baseline=\'middle\' text-anchor=\'middle\'%3EImage Loading Failed (Check Server Path)%3C/text%3E%3C/svg%3E';" alt="Website Under Construction" class="construction-image">
+        </div>
 
-        <!-- Contact Section -->
         <div class="contact-section">
             <button id="contactBtn" class="btn">Contact us</button>
             
-            <!-- Cloudflare Turnstile Widget Container -->
+            <!-- Cloudflare Turnstile Container -->
             <div id="turnstile-container"></div>
 
-            <!-- The Form -->
+            <!-- Contact Form -->
             <form id="contactForm" action="https://formsubmit.co/hello@udayic.com" method="POST">
-                <input type="hidden" name="_captcha" value="false">
+                <!-- FormSubmit Settings -->
+                <input type="hidden" name="_captcha" value="false"> <!-- Using Turnstile instead -->
                 <input type="hidden" name="_subject" value="New Lead from Udayic Website!">
                 <input type="hidden" name="_template" value="table">
 
@@ -201,12 +104,8 @@
                 <div class="form-group">
                     <label>I am a: *</label>
                     <div class="radio-group">
-                        <label>
-                            <input type="radio" name="Customer Type" value="Individual Home Owner" required onchange="toggleFormFields()"> Individual
-                        </label>
-                        <label>
-                            <input type="radio" name="Customer Type" value="Business" required onchange="toggleFormFields()"> Business
-                        </label>
+                        <label><input type="radio" name="Customer Type" value="Individual Home Owner" required onchange="toggleFormFields()"> Individual</label>
+                        <label><input type="radio" name="Customer Type" value="Business" required onchange="toggleFormFields()"> Business</label>
                     </div>
                 </div>
 
@@ -237,50 +136,47 @@
 
                 <button type="submit" class="btn" style="width: 100%;">Send Message</button>
             </form>
-
         </div>
-
     </main>
 
     <script>
-        // 1. Get DOM elements
         const contactBtn = document.getElementById('contactBtn');
         const turnstileContainer = document.getElementById('turnstile-container');
         const contactForm = document.getElementById('contactForm');
+        
         let turnstileWidgetId = null;
+        let isTurnstileRendered = false;
 
-        // 2. Since we can't load the actual image via text, we will load a placeholder
-        // Replace the Base64 placeholder with the actual image path if you host it,
-        // OR use the fallback below if the image file is in the same folder.
-        document.getElementById('constructionImg').src = 'website-in-progress.png';
-        document.getElementById('constructionImg').onerror = function() {
-             // If image fails to load, use a Base64 placeholder or display text
-             this.src = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='400'%3E%3Crect width='100%25' height='100%25' fill='%23f0f0f0'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='24' fill='%23333' dominant-baseline='middle' text-anchor='middle'%3EWebsite Under Construction%3C/text%3E%3C/svg%3E";
-        };
-
-        // 3. Initialize Turnstile only when the Contact button is clicked
+        // Trigger Turnstile rendering only when the user clicks the button
         contactBtn.addEventListener('click', function() {
             contactBtn.style.display = 'none';
             turnstileContainer.style.display = 'block';
 
-            // Render the Turnstile explicitly
-            if (turnstileWidgetId === null) {
-                turnstileWidgetId = turnstile.render('#turnstile-container', {
-                    sitekey: '0x4AAAAAAFaOzFr3sNQ9_usH', // <-- PASTE YOUR CLOUDFLARE SITE KEY HERE
-                    theme: 'light',
-                    callback: function(token) {
-                        // This function ONLY runs when the human check is successfully passed
-                        turnstileContainer.style.display = 'none';
-                        contactForm.style.display = 'block';
-                    },
-                    'error-callback': function() {
-                        alert('Security check failed. Please refresh the page and try again.');
-                    }
-                });
-            }
+            // We use a small interval to guarantee the Cloudflare script has fully loaded
+            const checkCloudflare = setInterval(function() {
+                if (typeof turnstile !== 'undefined' && !isTurnstileRendered) {
+                    clearInterval(checkCloudflare); // Stop checking
+                    
+                    // Render the Turnstile Widget Explicitly
+                    turnstileWidgetId = turnstile.render('#turnstile-container', {
+                        sitekey: '0x4AAAAAAFaOzFr3sNQ9_usH', // <--- 🚨 REPLACE THIS WITH YOUR ACTUAL CLOUDFLARE SITE KEY 🚨
+                        theme: 'light',
+                        callback: function(token) {
+                            // ONLY executes if Cloudflare verifies the user is human
+                            turnstileContainer.style.display = 'none';
+                            contactForm.style.display = 'block';
+                        },
+                        'error-callback': function(errorCode) {
+                            console.error("Turnstile Error:", errorCode);
+                            alert('Security check failed to load. Please refresh the page and try again.');
+                        }
+                    });
+                    isTurnstileRendered = true;
+                }
+            }, 100); // Check every 100ms
         });
 
-        // 4. Dynamic Form Logic (Show/Hide Company Name)
+        // Dynamic logic to show/hide Company Name field
         function toggleFormFields() {
             const customerType = document.querySelector('input[name="Customer Type"]:checked').value;
             const companyGroup = document.getElementById('companyNameGroup');
@@ -296,6 +192,5 @@
             }
         }
     </script>
-
 </body>
 </html>
