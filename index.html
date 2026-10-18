@@ -23,7 +23,7 @@
             position: relative;
         }
 
-        /* Top-Right Logo */
+        /* Top-Right SVG Logo */
         .logo-container {
             position: absolute;
             top: 20px;
@@ -31,8 +31,8 @@
             z-index: 10;
         }
 
-        .logo-container img {
-            height: 50px; /* Adjust based on your actual logo size */
+        .logo-container svg {
+            height: 40px; /* Adjust size here */
             width: auto;
         }
 
@@ -50,22 +50,14 @@
         .construction-image {
             max-width: 100%;
             height: auto;
-            max-height: 60vh; /* Keeps it from being too tall on large screens */
+            max-height: 50vh;
             object-fit: contain;
-            border-radius: 8px; /* Optional: softens the edges of the image */
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05); /* Subtle depth */
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
 
-        /* Contact Button & Turnstile Area */
-        .contact-section {
-            margin-top: 40px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .contact-btn {
+        /* Buttons */
+        .btn {
             background-color: #333333;
             color: #ffffff;
             border: none;
@@ -77,69 +69,195 @@
             transition: background-color 0.2s ease, transform 0.1s ease;
         }
 
-        .contact-btn:hover {
+        .btn:hover {
             background-color: #555555;
         }
 
-        .contact-btn:active {
-            transform: scale(0.98);
+        /* Contact Section & Form Layout */
+        .contact-section {
+            margin-top: 30px;
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
-        /* Hide Turnstile container initially */
         .turnstile-container {
             display: none;
-            margin-top: 10px;
+            margin-bottom: 20px;
         }
 
         .turnstile-container.active {
             display: block;
         }
 
-        /* Responsive adjustments */
+        /* Form Styling */
+        #contactForm {
+            display: none; /* Hidden until turnstile passes */
+            width: 100%;
+            background: #f9f9f9;
+            padding: 25px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        #contactForm.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="email"],
+        .form-group input[type="tel"],
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 14px;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 5px;
+        }
+
+        .radio-group label {
+            font-weight: normal;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Responsive */
         @media (max-width: 768px) {
             .logo-container {
                 top: 15px;
                 right: 15px;
             }
-            .logo-container img {
-                height: 35px;
+            .logo-container svg {
+                height: 30px;
             }
-            .construction-image {
-                max-height: 50vh;
+            .main-content {
+                padding-top: 80px;
             }
         }
     </style>
 </head>
 <body>
 
-    <!-- Top-Right Logo -->
+    <!-- Top-Right Logo (Converted to Inline SVG) -->
     <div class="logo-container">
-        <!-- REPLACE 'Display_Name_1.png' WITH YOUR ACTUAL LOGO FILE PATH -->
-        <img src="Display_Name_1.png" alt="Udayic Solutions Logo">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 130" aria-label="Udayic Solutions Logo">
+            <g fill="#4A4A4A" font-family="Arial, Helvetica, sans-serif" font-weight="normal">
+                <!-- Top Line: UDAYIC -->
+                <text x="250" y="60" font-size="72" text-anchor="middle" letter-spacing="12">UDAYIC</text>
+                <!-- Bottom Line: SOLUTIONS -->
+                <text x="250" y="120" font-size="52" text-anchor="middle" letter-spacing="18">SOLUTIONS</text>
+            </g>
+        </svg>
     </div>
 
     <!-- Center Content -->
     <main class="main-content">
         
         <!-- Central Construction Image -->
-        <!-- REPLACE 'construction.png' WITH YOUR ACTUAL IMAGE FILE PATH -->
-        <img src="construction.png" alt="Website Under Construction" class="construction-image">
+        <img src="website-in-progress.png" alt="Website Under Construction" class="construction-image">
 
         <!-- Contact Section -->
         <div class="contact-section">
-            <button id="contactBtn" class="contact-btn">Contact us</button>
+            <button id="contactBtn" class="btn">Contact us</button>
             
-            <!-- Cloudflare Turnstile Widget Container -->
+            <!-- Cloudflare Turnstile Widget -->
             <div id="turnstileContainer" class="turnstile-container">
-                <!-- 
-                  IMPORTANT: Replace 'YOUR_SITE_KEY' with your actual Cloudflare Turnstile Site Key.
-                  The callback function 'onSuccess' will trigger automatically after verification.
-                -->
+                <!-- Replace YOUR_SITE_KEY with your actual Cloudflare Turnstile Site Key -->
                 <div class="cf-turnstile" 
                      data-sitekey="0x4AAAAAAFaOzFr3sNQ9_usH" 
-                     data-callback="onSuccess">
+                     data-callback="onTurnstileSuccess">
                 </div>
             </div>
+
+            <!-- The Form -->
+            <!-- Action points to FormSubmit.co, which forwards to hello@udayic.com -->
+            <form id="contactForm" action="https://formsubmit.co/hello@udayic.com" method="POST">
+                
+                <!-- FormSubmit Configurations -->
+                <input type="hidden" name="_captcha" value="false"> <!-- We use Turnstile instead -->
+                <input type="hidden" name="_subject" value="New Lead from Udayic Website!">
+                <input type="hidden" name="_template" value="table">
+
+                <div class="form-group">
+                    <label for="fullName">Full Name *</label>
+                    <input type="text" id="fullName" name="Full Name" required>
+                </div>
+
+                <div class="form-group">
+                    <label>I am a: *</label>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="Customer Type" value="Individual Home Owner" required onchange="toggleFormFields()"> Individual
+                        </label>
+                        <label>
+                            <input type="radio" name="Customer Type" value="Business" required onchange="toggleFormFields()"> Business
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Fields specific to Business -->
+                <div class="form-group hidden" id="companyNameGroup">
+                    <label for="companyName">Company Name *</label>
+                    <input type="text" id="companyName" name="Company Name">
+                </div>
+
+                <!-- Common Fields -->
+                <div class="form-group">
+                    <label for="phone">Phone Number *</label>
+                    <input type="tel" id="phone" name="Phone Number" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="city">City *</label>
+                    <input type="text" id="city" name="City" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email Address *</label>
+                    <input type="email" id="email" name="Email Address" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="message">How can we help you? *</label>
+                    <textarea id="message" name="Message" required></textarea>
+                </div>
+
+                <button type="submit" class="btn" style="width: 100%;">Send Message</button>
+            </form>
+
         </div>
 
     </main>
@@ -148,37 +266,36 @@
         // 1. Get DOM elements
         const contactBtn = document.getElementById('contactBtn');
         const turnstileContainer = document.getElementById('turnstileContainer');
+        const contactForm = document.getElementById('contactForm');
 
         // 2. Show Turnstile when "Contact us" is clicked
         contactBtn.addEventListener('click', function() {
-            // Hide the button to prevent multiple clicks
             contactBtn.style.display = 'none';
-            // Show the Turnstile widget
             turnstileContainer.classList.add('active');
         });
 
-        // 3. Cloudflare Turnstile Callback (Triggered on successful verification)
-        window.onSuccess = function(token) {
-            // Obfuscated Email Logic to prevent scraping
-            // Constructs the email address dynamically at runtime
-            const user = 'contact';
-            const domain = 'udayic.com';
-            const emailAddress = user + '@' + domain;
-
-            // Trigger the mailto client
-            window.location.href = 'mailto:' + emailAddress;
-
-            // Optional: Provide visual feedback to the user
-            alert('Verification successful! Opening your email client...');
-            
-            // Optional: Reset the UI after a brief delay
-            setTimeout(() => {
-                turnstileContainer.classList.remove('active');
-                contactBtn.style.display = 'block';
-                // If you need to reset the Turnstile widget, you would call:
-                // turnstile.reset();
-            }, 3000);
+        // 3. Turnstile Callback (Passed verification)
+        window.onTurnstileSuccess = function(token) {
+            // Hide the turnstile and show the form
+            turnstileContainer.classList.remove('active');
+            contactForm.classList.add('active');
         };
+
+        // 4. Dynamic Form Logic (Show/Hide Company Name)
+        function toggleFormFields() {
+            const customerType = document.querySelector('input[name="Customer Type"]:checked').value;
+            const companyGroup = document.getElementById('companyNameGroup');
+            const companyInput = document.getElementById('companyName');
+
+            if (customerType === 'Business') {
+                companyGroup.classList.remove('hidden');
+                companyInput.setAttribute('required', 'required');
+            } else {
+                companyGroup.classList.add('hidden');
+                companyInput.removeAttribute('required');
+                companyInput.value = ''; // clear data if switched back
+            }
+        }
     </script>
 
 </body>
