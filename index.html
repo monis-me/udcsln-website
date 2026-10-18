@@ -47,6 +47,7 @@
         /* Form Styling */
         .form-group { margin-bottom: 15px; text-align: left; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; color: #333; }
+        /* Removed HTML5 'required' from the form inputs, we will handle it via JS to prevent bypasses */
         .form-group input[type="text"], .form-group input[type="email"], .form-group input[type="tel"], .form-group textarea, .form-group select {
             width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-family: inherit; font-size: 14px; background-color: #fff;
         }
@@ -60,8 +61,8 @@
         .phone-input-group select { width: 40%; }
         .phone-input-group input { width: 60%; }
         
-        /* We are removing the visual error message based on your request, but keeping the CSS just in case */
-        .error-msg { display: none !important; }
+        /* Error Message Styling */
+        .error-msg { color: #d93025; font-size: 13px; font-weight: 600; margin-top: 5px; display: none; }
         
         .hidden { display: none !important; }
 
@@ -100,11 +101,15 @@
             <!-- Cloudflare Turnstile Container -->
             <div id="turnstile-container"></div>
 
-            <!-- Contact Form (Notice the 'novalidate' attribute added) -->
-            <form id="contactForm" action="https://formsubmit.co/hello@udayic.com" method="POST" novalidate>
+            <!-- Contact Form -->
+            <form id="contactForm" action="https://formsubmit.co/hello@udayic.com" method="POST">
+                <!-- FormSubmit Settings -->
                 <input type="hidden" name="_captcha" value="false">
                 <input type="hidden" name="_subject" value="New Lead from Udayic Website!">
                 <input type="hidden" name="_template" value="table">
+                
+                <!-- HONEYPOT FIELD: FormSubmit will silently reject the form if this is filled -->
+                <input type="text" name="_honey" id="honeypot" style="display:none">
 
                 <div class="form-group">
                     <label for="fullName">Full Name *</label>
@@ -128,7 +133,7 @@
                 <div class="form-group">
                     <label for="mobileNumber">Mobile Number *</label>
                     <div class="phone-input-group">
-                        <select id="countryCode" name="Country Code" required onchange="updatePhoneRules()">
+                        <select id="countryCode" name="Country Code" onchange="updatePhoneRules()">
                             <option value="+91" data-digits="10" selected>🇮🇳 India (+91)</option>
                             <option value="+61" data-digits="9">🇦🇺 Australia (+61)</option>
                             <option value="+880" data-digits="10">🇧🇩 Bangladesh (+880)</option>
@@ -155,8 +160,9 @@
                             <option value="+44" data-digits="10">🇬🇧 UK (+44)</option>
                             <option value="+1" data-digits="10">🇺🇸 USA (+1)</option>
                         </select>
-                        <input type="tel" id="mobileNumber" name="Mobile Number" required placeholder="Enter mobile number" maxlength="11" oninput="restrictInput(this)">
+                        <input type="tel" id="mobileNumber" name="Mobile Number" placeholder="Enter mobile number" maxlength="11" oninput="restrictInput(this)">
                     </div>
+                    <div id="phoneError" class="error-msg"></div>
                 </div>
 
                 <div class="form-group">
@@ -204,16 +210,12 @@
                         callback: function(token) {
                             turnstileContainer.style.display = 'none';
                             contactForm.style.display = 'block';
-                        },
-                        'error-callback': function(errorCode) {
-                            console.error("Turnstile Error:", errorCode);
-                            alert('Security check failed. Please refresh the page.');
                         }
                     });
                     isTurnstileRendered = true;
                 } else if (attempts > 50) {
                     clearInterval(checkCloudflare);
-                    alert("Could not load security check. Please check your internet connection.");
+                    alert("Could not load security check. Please refresh.");
                 }
             }, 100); 
         });
@@ -237,46 +239,44 @@
         // --- 3. STRICT MOBILE NUMBER LOGIC ---
         const mobileInput = document.getElementById('mobileNumber');
         const countrySelect = document.getElementById('countryCode');
+        const phoneError = document.getElementById('phoneError');
+        const form = document.getElementById('contactForm');
 
-        // Restrict input to only numbers
         function restrictInput(input) {
             input.value = input.value.replace(/[^0-9]/g, ''); 
         }
 
-        // Update max length dynamically based on country
         function updatePhoneRules() {
             const selectedOption = countrySelect.options[countrySelect.selectedIndex];
             const maxDigits = selectedOption.getAttribute('data-digits');
             
             mobileInput.setAttribute('maxlength', maxDigits);
-            mobileInput.setAttribute('minlength', maxDigits);
-            
             if (mobileInput.value.length > maxDigits) {
                 mobileInput.value = mobileInput.value.slice(0, maxDigits);
             }
         }
 
-        // Core Validation Function (Returns True/False silently)
+        // Core Validation Function
         function isMobileValid() {
             const selectedOption = countrySelect.options[countrySelect.selectedIndex];
             const countryCode = selectedOption.value;
             const requiredDigits = parseInt(selectedOption.getAttribute('data-digits'));
             const val = mobileInput.value;
 
-            // 1. Check Length
+            // Check Length
             if (val.length !== requiredDigits) return false;
 
-            // 2. Check for all zeros (e.g., 0000000000)
+            // Check all zeros
             if (/^0+$/.test(val)) return false;
 
-            // 3. Check for 5 or more repeating identical digits in a row (e.g., 4444444444)
+            // Check for 5 or more consecutive repeating digits (e.g., 9477777678)
             if (/(\d)\1{4,}/.test(val)) return false;
 
-            // 4. India Specific Rules (Must start with 7, 8, or 9. No 6s)
+            // India Specific Rules (Must start with 7, 8, or 9)
             if (countryCode === "+91") {
                 if (!/^[7-9]/.test(val)) return false;
             } 
-            // 5. General Rule for others (cannot start with 0)
+            // General Rule (Cannot start with 0)
             else {
                 if (val.startsWith('0')) return false;
             }
@@ -284,30 +284,37 @@
             return true;
         }
 
-        // --- 4. BULLETPROOF SUBMIT INTERCEPTION ---
-        contactForm.addEventListener('submit', function(event) {
-            // Stop the form from submitting immediately
-            event.preventDefault(); 
-
-            // Perform manual validation on all required fields
-            if (!contactForm.checkValidity()) {
-                // If standard fields (like Name, Email) are empty, stop silently.
-                return false; 
-            }
-
-            // Perform strict validation on Mobile Number
+        // Intercept form submission
+        form.addEventListener('submit', function(event) {
+            const honeyPot = document.getElementById('honeypot');
+            
+            // If the number is fake/invalid:
             if (!isMobileValid()) {
-                // If fake number is detected, stop silently. 
-                // The user sees nothing, the spammer is not notified, the form is not sent.
-                return false; 
+                event.preventDefault(); // Stop submission to FormSubmit
+                
+                // Show the generic error message you requested
+                phoneError.textContent = "Kindly enter your real phone number";
+                phoneError.style.display = 'block';
+                mobileInput.style.borderColor = '#d93025';
+                mobileInput.focus();
+                
+                // SILENT BAN: Move the fake number to the honeypot field. 
+                // If the spammer bypasses JS, FormSubmit will see this hidden field is filled 
+                // and will silently drop the email without notifying them.
+                honeyPot.value = mobileInput.value; 
+                
+                return false;
             }
-
-            // If we reach here, the form is 100% valid. We force it to submit.
-            contactForm.submit(); 
+            
+            // If valid, proceed to FormSubmit normally
+            return true;
         });
 
-        // Initialize rules on load
-        updatePhoneRules();
+        // Clear error on typing
+        mobileInput.addEventListener('input', function() {
+            phoneError.style.display = 'none';
+            mobileInput.style.borderColor = '#ccc';
+        });
     </script>
 </body>
 </html>
