@@ -60,8 +60,8 @@
         .phone-input-group select { width: 40%; }
         .phone-input-group input { width: 60%; }
         
-        /* Error Message Styling */
-        .error-msg { color: #d93025; font-size: 12px; margin-top: 5px; display: none; }
+        /* We are removing the visual error message based on your request, but keeping the CSS just in case */
+        .error-msg { display: none !important; }
         
         .hidden { display: none !important; }
 
@@ -100,8 +100,8 @@
             <!-- Cloudflare Turnstile Container -->
             <div id="turnstile-container"></div>
 
-            <!-- Contact Form -->
-            <form id="contactForm" action="https://formsubmit.co/hello@udayic.com" method="POST">
+            <!-- Contact Form (Notice the 'novalidate' attribute added) -->
+            <form id="contactForm" action="https://formsubmit.co/hello@udayic.com" method="POST" novalidate>
                 <input type="hidden" name="_captcha" value="false">
                 <input type="hidden" name="_subject" value="New Lead from Udayic Website!">
                 <input type="hidden" name="_template" value="table">
@@ -157,7 +157,6 @@
                         </select>
                         <input type="tel" id="mobileNumber" name="Mobile Number" required placeholder="Enter mobile number" maxlength="11" oninput="restrictInput(this)">
                     </div>
-                    <div id="phoneError" class="error-msg"></div>
                 </div>
 
                 <div class="form-group">
@@ -238,8 +237,6 @@
         // --- 3. STRICT MOBILE NUMBER LOGIC ---
         const mobileInput = document.getElementById('mobileNumber');
         const countrySelect = document.getElementById('countryCode');
-        const phoneError = document.getElementById('phoneError');
-        const form = document.getElementById('contactForm');
 
         // Restrict input to only numbers
         function restrictInput(input) {
@@ -254,15 +251,12 @@
             mobileInput.setAttribute('maxlength', maxDigits);
             mobileInput.setAttribute('minlength', maxDigits);
             
-            // Clear validation error state when changing countries
-            phoneError.style.display = 'none';
-            mobileInput.style.borderColor = '#ccc';
             if (mobileInput.value.length > maxDigits) {
                 mobileInput.value = mobileInput.value.slice(0, maxDigits);
             }
         }
 
-        // Core Validation Function
+        // Core Validation Function (Returns True/False silently)
         function isMobileValid() {
             const selectedOption = countrySelect.options[countrySelect.selectedIndex];
             const countryCode = selectedOption.value;
@@ -270,71 +264,46 @@
             const val = mobileInput.value;
 
             // 1. Check Length
-            if (val.length !== requiredDigits) {
-                showError(`Please enter exactly ${requiredDigits} digits.`);
-                return false;
-            }
+            if (val.length !== requiredDigits) return false;
 
             // 2. Check for all zeros (e.g., 0000000000)
-            if (/^0+$/.test(val)) {
-                showError("Mobile number cannot be all zeros.");
-                return false;
-            }
+            if (/^0+$/.test(val)) return false;
 
-            // 3. Check for 5 or more repeating identical digits in a row (e.g., 9477777678)
-            // This regex looks for any single digit followed by itself 4 or more times.
-            if (/(\d)\1{4,}/.test(val)) {
-                showError("Mobile number cannot have 5 or more consecutive repeating digits.");
-                return false;
-            }
+            // 3. Check for 5 or more repeating identical digits in a row (e.g., 4444444444)
+            if (/(\d)\1{4,}/.test(val)) return false;
 
-            // 4. India Specific Rules
+            // 4. India Specific Rules (Must start with 7, 8, or 9. No 6s)
             if (countryCode === "+91") {
-                // Must start with 7, 8, or 9. (Blocks 0,1,2,3,4,5,6)
-                if (!/^[7-9]/.test(val)) {
-                    showError("Indian mobile numbers must start with 7, 8, or 9.");
-                    return false;
-                }
+                if (!/^[7-9]/.test(val)) return false;
             } 
             // 5. General Rule for others (cannot start with 0)
             else {
-                if (val.startsWith('0')) {
-                    showError("Mobile number cannot start with 0.");
-                    return false;
-                }
+                if (val.startsWith('0')) return false;
             }
 
-            // If all checks pass
-            hideError();
             return true;
         }
 
-        function showError(msg) {
-            phoneError.textContent = msg;
-            phoneError.style.display = 'block';
-            mobileInput.style.borderColor = '#d93025';
-        }
+        // --- 4. BULLETPROOF SUBMIT INTERCEPTION ---
+        contactForm.addEventListener('submit', function(event) {
+            // Stop the form from submitting immediately
+            event.preventDefault(); 
 
-        function hideError() {
-            phoneError.style.display = 'none';
-            mobileInput.style.borderColor = '#ccc';
-        }
-
-        // Live visual feedback when typing
-        mobileInput.addEventListener('input', function() {
-            if (phoneError.style.display === 'block') {
-                isMobileValid(); // Re-check on every keystroke once an error is shown
+            // Perform manual validation on all required fields
+            if (!contactForm.checkValidity()) {
+                // If standard fields (like Name, Email) are empty, stop silently.
+                return false; 
             }
-        });
 
-        // Intercept form submission
-        form.addEventListener('submit', function(event) {
-            // If validation fails, prevent submission completely
+            // Perform strict validation on Mobile Number
             if (!isMobileValid()) {
-                event.preventDefault(); 
-                mobileInput.focus();
-                return false;
+                // If fake number is detected, stop silently. 
+                // The user sees nothing, the spammer is not notified, the form is not sent.
+                return false; 
             }
+
+            // If we reach here, the form is 100% valid. We force it to submit.
+            contactForm.submit(); 
         });
 
         // Initialize rules on load
