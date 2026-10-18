@@ -101,7 +101,7 @@
             <div id="turnstile-container"></div>
 
             <!-- Contact Form -->
-            <form id="contactForm" action="https://formsubmit.co/hello@udayic.com" method="POST" onsubmit="return validateFinalForm(event)">
+            <form id="contactForm" action="https://formsubmit.co/hello@udayic.com" method="POST">
                 <input type="hidden" name="_captcha" value="false">
                 <input type="hidden" name="_subject" value="New Lead from Udayic Website!">
                 <input type="hidden" name="_template" value="table">
@@ -124,7 +124,7 @@
                     <input type="text" id="companyName" name="Company Name">
                 </div>
 
-                <!-- EXACT REQUEST: Country Code and Mobile Number -->
+                <!-- Mobile Number Section -->
                 <div class="form-group">
                     <label for="mobileNumber">Mobile Number *</label>
                     <div class="phone-input-group">
@@ -155,7 +155,6 @@
                             <option value="+44" data-digits="10">🇬🇧 UK (+44)</option>
                             <option value="+1" data-digits="10">🇺🇸 USA (+1)</option>
                         </select>
-                        <!-- Input restricted to numbers only via JS -->
                         <input type="tel" id="mobileNumber" name="Mobile Number" required placeholder="Enter mobile number" maxlength="11" oninput="restrictInput(this)">
                     </div>
                     <div id="phoneError" class="error-msg"></div>
@@ -176,7 +175,7 @@
                     <textarea id="message" name="Message" required></textarea>
                 </div>
 
-                <button type="submit" class="btn" style="width: 100%;">Send Message</button>
+                <button type="submit" class="btn" style="width: 100%;" id="submitBtn">Send Message</button>
             </form>
         </div>
     </main>
@@ -236,12 +235,13 @@
             }
         }
 
-        // --- 3. MOBILE NUMBER LOGIC ---
+        // --- 3. STRICT MOBILE NUMBER LOGIC ---
         const mobileInput = document.getElementById('mobileNumber');
         const countrySelect = document.getElementById('countryCode');
         const phoneError = document.getElementById('phoneError');
+        const form = document.getElementById('contactForm');
 
-        // Restrict input to only numbers (prevents '0' at start via validation later)
+        // Restrict input to only numbers
         function restrictInput(input) {
             input.value = input.value.replace(/[^0-9]/g, ''); 
         }
@@ -262,79 +262,80 @@
             }
         }
 
-        // Custom validation specifically for India (and general fallback for others)
-        function validateMobileNumber() {
+        // Core Validation Function
+        function isMobileValid() {
             const selectedOption = countrySelect.options[countrySelect.selectedIndex];
             const countryCode = selectedOption.value;
             const requiredDigits = parseInt(selectedOption.getAttribute('data-digits'));
             const val = mobileInput.value;
 
-            let isValid = true;
-            let errorMessage = "";
-
-            // 1. Basic Length Check
+            // 1. Check Length
             if (val.length !== requiredDigits) {
-                isValid = false;
-                errorMessage = `Please enter exactly ${requiredDigits} digits.`;
-            } 
-            // 2. Country Specific Rules
-            else if (countryCode === "+91") { // INDIA SPECIFIC RULES
-                
-                // Rule: Must start with 6, 7, 8, or 9
-                if (!/^[6-9]/.test(val)) {
-                    isValid = false;
-                    errorMessage = "Indian mobile numbers must start with 6, 7, 8, or 9.";
+                showError(`Please enter exactly ${requiredDigits} digits.`);
+                return false;
+            }
+
+            // 2. Check for all zeros (e.g., 0000000000)
+            if (/^0+$/.test(val)) {
+                showError("Mobile number cannot be all zeros.");
+                return false;
+            }
+
+            // 3. Check for 5 or more repeating identical digits in a row (e.g., 9477777678)
+            // This regex looks for any single digit followed by itself 4 or more times.
+            if (/(\d)\1{4,}/.test(val)) {
+                showError("Mobile number cannot have 5 or more consecutive repeating digits.");
+                return false;
+            }
+
+            // 4. India Specific Rules
+            if (countryCode === "+91") {
+                // Must start with 7, 8, or 9. (Blocks 0,1,2,3,4,5,6)
+                if (!/^[7-9]/.test(val)) {
+                    showError("Indian mobile numbers must start with 7, 8, or 9.");
+                    return false;
                 }
-                // Rule: Cannot be all identical digits (e.g., 9999999999)
-                else if (/^(\d)\1+$/.test(val)) {
-                    isValid = false;
-                    errorMessage = "Please enter a valid mobile number (repeating digits are not allowed).";
-                }
             } 
-            // 3. General Rules for other countries
+            // 5. General Rule for others (cannot start with 0)
             else {
-                // Prevent starting with 0 globally as requested
                 if (val.startsWith('0')) {
-                    isValid = false;
-                    errorMessage = "Mobile number cannot start with 0.";
-                }
-                // Prevent all repeating digits globally
-                else if (/^(\d)\1+$/.test(val)) {
-                    isValid = false;
-                    errorMessage = "Please enter a valid mobile number (repeating digits are not allowed).";
+                    showError("Mobile number cannot start with 0.");
+                    return false;
                 }
             }
 
-            // Apply Visual Feedback
-            if (!isValid) {
-                phoneError.textContent = errorMessage;
-                phoneError.style.display = 'block';
-                mobileInput.style.borderColor = '#d93025';
-                return false;
-            } else {
-                phoneError.style.display = 'none';
-                mobileInput.style.borderColor = '#ccc';
-                return true;
-            }
+            // If all checks pass
+            hideError();
+            return true;
         }
 
-        // Trigger validation on typing (to clear errors) and on submit
+        function showError(msg) {
+            phoneError.textContent = msg;
+            phoneError.style.display = 'block';
+            mobileInput.style.borderColor = '#d93025';
+        }
+
+        function hideError() {
+            phoneError.style.display = 'none';
+            mobileInput.style.borderColor = '#ccc';
+        }
+
+        // Live visual feedback when typing
         mobileInput.addEventListener('input', function() {
             if (phoneError.style.display === 'block') {
-                validateMobileNumber(); 
+                isMobileValid(); // Re-check on every keystroke once an error is shown
             }
         });
 
-        // --- 4. FINAL SUBMIT INTERCEPTOR ---
-        function validateFinalForm(event) {
-            // Prevent submission if mobile number is invalid
-            if (!validateMobileNumber()) {
-                event.preventDefault(); // Stop form submission
-                mobileInput.focus(); // Focus on the error field
+        // Intercept form submission
+        form.addEventListener('submit', function(event) {
+            // If validation fails, prevent submission completely
+            if (!isMobileValid()) {
+                event.preventDefault(); 
+                mobileInput.focus();
                 return false;
             }
-            return true; // Proceed with submission
-        }
+        });
 
         // Initialize rules on load
         updatePhoneRules();
