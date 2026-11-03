@@ -34,7 +34,7 @@
         /* Buttons */
         .btn {
             background-color: #333333; color: #ffffff; border: none; padding: 14px 32px; font-size: 16px; font-weight: 600; border-radius: 6px; cursor: pointer; transition: background-color 0.2s ease, transform 0.1s ease;
-            text-decoration: none; display: inline-block; text-align: center;
+            text-decoration: none; display: inline-block; text-align: center; width: 100%;
         }
         .btn:hover { background-color: #555555; }
 
@@ -46,27 +46,44 @@
             justify-content: center;
             gap: 10px;
         }
-        .whatsapp-btn:hover {
-            background-color: #20ba5a !important;
-        }
-        .whatsapp-btn svg {
-            width: 20px;
-            height: 20px;
-            fill: #ffffff;
-        }
+        .whatsapp-btn:hover { background-color: #20ba5a !important; }
+        .whatsapp-btn svg { width: 20px; height: 20px; fill: #ffffff; }
         
         /* Contact Section Layout */
         .contact-section { margin-top: 30px; width: 100%; max-width: 500px; display: flex; flex-direction: column; align-items: center; }
         
         /* Hidden by default until JS triggers them */
         #turnstile-container { display: none; margin-bottom: 20px; min-height: 65px; }
-        #whatsappBox { display: none; width: 100%; text-align: center; }
+        #contactForm { display: none; width: 100%; background: #f9f9f9; padding: 25px; border-radius: 8px; border: 1px solid #e0e0e0; text-align: left; }
+        
+        /* Form Styling */
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; color: #333; }
+        .form-group input[type="text"], .form-group select {
+            width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-family: inherit; font-size: 14px; background-color: #fff;
+        }
+        
+        /* Row layout for Salutation & Full Name */
+        .row-group { display: flex; gap: 10px; }
+        .col-salutation { width: 35%; }
+        .col-name { width: 65%; }
+
+        /* Radio Group - Left Aligned */
+        .radio-group { display: flex; flex-direction: column; gap: 8px; margin-top: 5px; }
+        .radio-group label { font-weight: normal; display: flex; align-items: center; gap: 8px; cursor: pointer; }
+        .radio-group input[type="radio"] { cursor: pointer; accent-color: #333; }
+
+        .horizontal-radio { flex-direction: row; gap: 20px; }
+        
+        .error-msg { color: #d93025; font-size: 13px; font-weight: 600; margin-top: 5px; display: none; }
+        .hidden { display: none !important; }
 
         /* Responsive */
         @media (max-width: 768px) {
             .logo-container { top: 15px; right: 15px; }
             .logo-container svg { height: 30px; }
             .main-content { padding-top: 80px; }
+            .horizontal-radio { flex-direction: column; gap: 8px; }
         }
     </style>
 </head>
@@ -95,28 +112,201 @@
             <!-- Cloudflare Turnstile Container -->
             <div id="turnstile-container"></div>
 
-            <!-- WhatsApp Redirect Box (Appears safely after Captcha verification) -->
-            <div id="whatsappBox">
-                <a href="https://wa.me/917240592812?text=Hello%20Udayic%20Solutions,%20I%20want%20to%20know%20more%20about%20your%20services." 
-                   target="_blank" 
-                   rel="noopener noreferrer" 
-                   class="btn whatsapp-btn">
-                    <!-- WhatsApp SVG Icon -->
+            <!-- Structured Contact Form -->
+            <form id="contactForm" onsubmit="redirectToWhatsApp(event)">
+                <!-- Honeypot anti-spam field -->
+                <input type="text" id="honeypot" name="honeypot" style="display:none">
+
+                <!-- 1 & 2. Full Name & Salutation -->
+                <div class="form-group">
+                    <label>Full Name & Salutation *</label>
+                    <div class="row-group">
+                        <div class="col-salutation">
+                            <select id="salutation" required>
+                                <option value="Mr.">Mr.</option>
+                                <option value="Ms.">Ms.</option>
+                                <option value="Mrs.">Mrs.</option>
+                                <option value="Dr.">Dr.</option>
+                                <option value="Prof.">Prof.</option>
+                            </select>
+                        </div>
+                        <div class="col-name">
+                            <input type="text" id="fullName" placeholder="Enter full name" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Customer Type (Individual / Company) -->
+                <div class="form-group">
+                    <label>Are you *</label>
+                    <div class="radio-group horizontal-radio">
+                        <label><input type="radio" name="customerType" value="Individual" checked onchange="toggleCustomerType()"> Individual</label>
+                        <label><input type="radio" name="customerType" value="Company" onchange="toggleCustomerType()"> Company</label>
+                    </div>
+                </div>
+
+                <!-- 4. Company Name (Conditional) -->
+                <div class="form-group hidden" id="companyGroup">
+                    <label for="companyName">Company Name *</label>
+                    <input type="text" id="companyName" placeholder="Enter company name">
+                </div>
+
+                <!-- 5. Country Selection -->
+                <div class="form-group">
+                    <label for="country">Country *</label>
+                    <select id="country" onchange="updateStates()" required>
+                        <option value="India" selected>India</option>
+                        <option value="UAE">UAE</option>
+                    </select>
+                </div>
+
+                <!-- 6. State Selection -->
+                <div class="form-group">
+                    <label for="state">State *</label>
+                    <select id="state" onchange="updateCities()" required>
+                        <!-- Populated dynamically via JS -->
+                    </select>
+                </div>
+
+                <!-- 7. City / District Selection -->
+                <div class="form-group" id="cityGroup">
+                    <label for="city">City / District *</label>
+                    <select id="city" required>
+                        <!-- Populated dynamically via JS -->
+                    </select>
+                </div>
+
+                <!-- 8. Contact Time Preference -->
+                <div class="form-group">
+                    <label>During what time would you like to be contacted by us over phone *</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="contactTime" value="9am to 5pm" checked> 9am to 5pm</label>
+                        <label><input type="radio" name="contactTime" value="9am to 9pm"> 9am to 9pm</label>
+                    </div>
+                </div>
+
+                <!-- 9. Preferred Days -->
+                <div class="form-group">
+                    <label>Your preferred days to be contacted by us *</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="contactDays" value="Any day of the Week (including Saturday and Sunday)" checked> Any day of the Week (including Saturday and Sunday)</label>
+                        <label><input type="radio" name="contactDays" value="Only Monday to Friday"> Only Monday to Friday</label>
+                        <label><input type="radio" name="contactDays" value="Only Monday to Saturday"> Only Monday to Saturday</label>
+                    </div>
+                </div>
+
+                <div id="formError" class="error-msg"></div>
+
+                <button type="submit" class="btn whatsapp-btn" style="margin-top: 15px;">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
                         <path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.6 66.4 14 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z"/>
                     </svg>
-                    Chat on WhatsApp
-                </a>
-            </div>
+                    Continue to WhatsApp
+                </button>
+            </form>
         </div>
     </main>
 
     <script>
-        // --- CLOUDFLARE TURNSTILE + WHATSAPP TOGGLE LOGIC ---
+        // --- DATA STRUCTURES FOR COUNTRY -> STATE -> DISTRICT/CITY ---
+        const indianStatesAndDistricts = {
+            "Andhra Pradesh, AP": ["Anantapur", "Chittoor", "East Godavari", "Guntur", "Krishna", "Kurnool", "Prakasam", "Srikakulam", "Visakhapatnam", "Vizianagaram", "West Godavari", "YSR Kadapa"],
+            "Arunachal Pradesh, AR": ["Tawang", "West Kameng", "East Kameng", "Papum Pare", "Kurung Kumey", "Kra Daadi", "Lower Subansiri", "Upper Subansiri", "West Siang", "East Siang", "Siang", "Upper Siang", "Lower Siang", "Lower Dibang Valley", "Dibang Valley", "Anjaw", "Lohang", "Namsai", "Changlang", "Tirap", "Longding"],
+            "Assam, AS": ["Baksa", "Barpeta", "Biswanath", "Bongaigaon", "Cachar", "Charaideo", "Chirang", "Darrang", "Dhemaji", "Dhubri", "Dibrugarh", "Dima Hasao", "Goalpara", "Golaghat", "Hailakandi", "Hojai", "Jorhat", "Kamrup", "Kamrup Metropolitan", "Karbi Anglong", "Karimganj", "Kokrajhar", "Lakhimpur", "Majuli", "Morigaon", "Nagaon", "Nalbari", "Sivasagar", "Sonitpur", "Tinsukia", "Udalguri", "West Karbi Anglong"],
+            "Bihar, BR": ["Araria", "Arwal", "Aurangabad", "Banka", "Begusarai", "Bhagalpur", "Bhojpur", "Buxar", "Darbhanga", "East Champaran", "Gaya", "Gopalganj", "Jamui", "Jehanabad", "Kaimur", "Katihar", "Khagaria", "Kishanganj", "Lakhisarai", "Madhepura", "Madhubani", "Munger", "Muzaffarpur", "Nalanda", "Nawada", "Patna", "Purnia", "Rohtas", "Saharsa", "Samastipur", "Saran", "Sheikhpura", "Sheohar", "Sitamarhi", "Siwan", "Supaul", "Vaishali", "West Champaran"],
+            "Delhi, DL": ["Central Delhi", "East Delhi", "New Delhi", "North Delhi", "North East Delhi", "North West Delhi", "Shahdara", "South Delhi", "South East Delhi", "South West Delhi", "West Delhi"],
+            "Goa, GA": ["North Goa", "South Goa"],
+            "Gujarat, GJ": ["Ahmedabad", "Amreli", "Anand", "Aravalli", "Banaskantha", "Bharuch", "Bhavnagar", "Botad", "Chhota Udaipur", "Dahod", "Dang", "Devbhoomi Dwarka", "Gandhinagar", "Gir Somnath", "Jamnagar", "Junagadh", "Kheda", "Kutch", "Mahisagar", "Mehsana", "Morbi", "Narmada", "Navsari", "Panchmahal", "Patan", "Porbandar", "Rajkot", "Sabarkantha", "Surat", "Surendranagar", "Tapi", "Vadodara", "Valsad"],
+            "Haryana, HR": ["Ambala", "Bhiwani", "Charkhi Dadri", "Faridabad", "Fatehabad", "Gurugram", "Hisar", "Jhajjar", "Jind", "Kaithal", "Karnal", "Kurukshetra", "Narnaul", "Nuh", "Palwal", "Panchkula", "Panipat", "Rewari", "Rohtak", "Sirsa", "Sonipat", "Yamunanagar"],
+            "Karnataka, KA": ["Bagalkot", "Bangalore Rural", "Bangalore Urban", "Belgaum", "Bellary", "Bidar", "Chamarajanagar", "Chikkaballapur", "Chikkamagaluru", "Chitradurga", "Dakshina Kannada", "Davanagere", "Dharwad", "Gadag", "Gulbarga", "Hassan", "Haveri", "Kodagu", "Kolar", "Koppal", "Mandya", "Mysore", "Raichur", "Ramanagara", "Shimoga", "Tumkur", "Udupi", "Uttara Kannada", "Vijayapura", "Yadgir"],
+            "Maharashtra, MH": ["Ahmednagar", "Akola", "Amravati", "Aurangabad", "Beed", "Bhandara", "Buldhana", "Chandrapur", "Dhule", "Gadchiroli", "Gondia", "Hingoli", "Jalgaon", "Jalna", "Kolhapur", "Latur", "Mumbai City", "Mumbai Suburban", "Nagpur", "Nanded", "Nandurbar", "Nashik", "Osmanabad", "Palghar", "Parbhani", "Pune", "Raigad", "Ratnagiri", "Sangli", "Satara", "Sindhudurg", "Solapur", "Thane", "Wardha", "Washim", "Yavatmal"],
+            "Punjab, PB": ["Amritsar", "Barnala", "Bathinda", "Faridkot", "Fatehgarh Sahib", "Fazilka", "Firozpur", "Gurdaspur", "Hoshiarpur", "Jalandhar", "Kapurthala", "Ludhiana", "Mansa", "Moga", "Muktsar", "Pathankot", "Patiala", "Rupnagar", "SAS Nagar", "Sangrur", "Shaheed Bhagat Singh Nagar", "Tarn Taran"],
+            "Rajasthan, RJ": ["Ajmer", "Alwar", "Banswara", "Baran", "Barmer", "Bharatpur", "Bhilwara", "Bikaner", "Bundi", "Chittorgarh", "Churu", "Dausa", "Dholpur", "Dungarpur", "Hanumangarh", "Jaipur", "Jaisalmer", "Jalore", "Jhalawar", "Jhunjhunu", "Jodhpur", "Karauli", "Kota", "Nagaur", "Pali", "Pratapgarh", "Rajsamand", "Sawai Madhopur", "Sikar", "Sirohi", "Sri Ganganagar", "Tonk", "Udaipur"],
+            "Tamil Nadu, TN": ["Chennai", "Coimbatore", "Cuddalore", "Dharmapuri", "Dindigul", "Erode", "Kanchipuram", "Kanyakumari", "Karur", "Krishnagiri", "Madurai", "Nagapattinam", "Namakkal", "Nilgiris", "Perambalur", "Pudukkottai", "Ramanathapuram", "Salem", "Sivaganga", "Thanjavur", "Theni", "Thoothukudi", "Tiruchirappalli", "Tirunelveli", "Tiruppur", "Tiruvallur", "Tiruvannamalai", "Tiruvarur", "Vellore", "Viluppuram", "Virudhunagar"],
+            "Uttar Pradesh, UP": ["Agra", "Aligarh", "Allahabad", "Ambedkar Nagar", "Amethi", "Amroha", "Auraiya", "Azamgarh", "Baghpat", "Bahraich", "Ballia", "Balrampur", "Banda", "Barabanki", "Bareilly", "Basti", "Bhadohi", "Bijnor", "Budaun", "Bulandshahr", "Chandauli", "Chitrakoot", "Deoria", "Etah", "Etawah", "Faizabad", "Farrukhabad", "Fatehpur", "Firozabad", "Gautam Buddha Nagar", "Ghaziabad", "Ghazipur", "Gonda", "Gorakhpur", "Hamirpur", "Hapur", "Hardoi", "Hathras", "Jalaun", "Jaunpur", "Jhansi", "Kannauj", "Kanpur Dehat", "Kanpur Nagar", "Kasganj", "Kaushambi", "Kheri", "Kushinagar", "Lalitpur", "Lucknow", "Maharajganj", "Mahoba", "Mainpuri", "Mathura", "Mau", "Meerut", "Mirzapur", "Moradabad", "Muzaffarnagar", "Pilibhit", "Pratapgarh", "Rae Bareli", "Rampur", "Saharanpur", "Sambhal", "Sant Kabir Nagar", "Shahjahanpur", "Shamli", "Shravasti", "Siddharthnagar", "Sitapur", "Sonbhadra", "Sultanpur", "Unnao", "Varanasi"],
+            "West Bengal, WB": ["Alipurduar", "Bankura", "Birbhum", "Cooch Behar", "Dakshin Dinajpur", "Darjeeling", "Hooghly", "Howrah", "Jalpaiguri", "Jhargram", "Kalimpong", "Kolkata", "Malda", "Murshidabad", "Nadia", "North 24 Parganas", "Paschim Bardhaman", "Paschim Medinipur", "Purba Bardhaman", "Purba Medinipur", "Purulia", "South 24 Parganas", "Uttar Dinajpur"]
+        };
+
+        const uaeEmirates = [
+            "Abu Dhabi", "Ajman", "Dubai", "Fujairah", "Ras Al Khaimah", "Sharjah", "Umm Al Quwain"
+        ];
+
+        // --- INIT & DYNAMIC DROPDOWNS ---
+        window.onload = function() {
+            updateStates();
+        };
+
+        function updateStates() {
+            const countrySelect = document.getElementById('country');
+            const stateSelect = document.getElementById('state');
+            stateSelect.innerHTML = '';
+
+            if (countrySelect.value === 'India') {
+                const sortedStates = Object.keys(indianStatesAndDistricts).sort();
+                sortedStates.forEach(state => {
+                    const opt = document.createElement('option');
+                    opt.value = state;
+                    opt.textContent = state;
+                    if (state.includes("Rajasthan")) opt.selected = true;
+                    stateSelect.appendChild(opt);
+                });
+            } else if (countrySelect.value === 'UAE') {
+                uaeEmirates.sort().forEach(emirate => {
+                    const opt = document.createElement('option');
+                    opt.value = emirate;
+                    opt.textContent = emirate;
+                    if (emirate === "Sharjah") opt.selected = true;
+                    stateSelect.appendChild(opt);
+                });
+            }
+            updateCities();
+        }
+
+        function updateCities() {
+            const countrySelect = document.getElementById('country');
+            const stateSelect = document.getElementById('state');
+            const cityGroup = document.getElementById('cityGroup');
+            const citySelect = document.getElementById('city');
+            citySelect.innerHTML = '';
+
+            if (countrySelect.value === 'UAE') {
+                cityGroup.classList.add('hidden');
+                citySelect.removeAttribute('required');
+            } else {
+                cityGroup.classList.remove('hidden');
+                citySelect.setAttribute('required', 'required');
+
+                const selectedState = stateSelect.value;
+                const districts = indianStatesAndDistricts[selectedState] || [];
+                districts.sort().forEach(district => {
+                    const opt = document.createElement('option');
+                    opt.value = district;
+                    opt.textContent = district;
+                    if (district === "Jaipur") opt.selected = true;
+                    citySelect.appendChild(opt);
+                });
+            }
+        }
+
+        function toggleCustomerType() {
+            const type = document.querySelector('input[name="customerType"]:checked').value;
+            const companyGroup = document.getElementById('companyGroup');
+            const companyInput = document.getElementById('companyName');
+
+            if (type === 'Company') {
+                companyGroup.classList.remove('hidden');
+                companyInput.setAttribute('required', 'required');
+            } else {
+                companyGroup.classList.add('hidden');
+                companyInput.removeAttribute('required');
+                companyInput.value = '';
+            }
+        }
+
+        // --- CLOUDFLARE TURNSTILE LOGIC ---
         const contactBtn = document.getElementById('contactBtn');
         const turnstileContainer = document.getElementById('turnstile-container');
-        const whatsappBox = document.getElementById('whatsappBox');
-        
+        const contactForm = document.getElementById('contactForm');
         let isTurnstileRendered = false;
 
         contactBtn.addEventListener('click', function() {
@@ -130,12 +320,11 @@
                     clearInterval(checkCloudflare);
                     
                     turnstile.render('#turnstile-container', {
-                        sitekey: '0x4AAAAAAFaOzFr3sNQ9_usH', // Apna Cloudflare Site Key yahan rakhein
+                        sitekey: '0x4AAAAAAFaOzFr3sNQ9_usH', // Replace with your Turnstile Site Key
                         theme: 'light',
                         callback: function(token) {
-                            // Jab user human verify ho jaye, tab captcha hide karke WhatsApp button dikhayein
                             turnstileContainer.style.display = 'none';
-                            whatsappBox.style.display = 'block';
+                            contactForm.style.display = 'block';
                         }
                     });
                     isTurnstileRendered = true;
@@ -145,6 +334,58 @@
                 }
             }, 100); 
         });
+
+        // --- WHATSAPP REDIRECT & MESSAGE BUILDER ---
+        function redirectToWhatsApp(event) {
+            event.preventDefault();
+
+            // Check Honeypot Anti-Spam
+            const honey = document.getElementById('honeypot').value;
+            if (honey) {
+                return false; // Silent drop for bots
+            }
+
+            const salutation = document.getElementById('salutation').value;
+            const fullName = document.getElementById('fullName').value.trim();
+            const customerType = document.querySelector('input[name="customerType"]:checked').value;
+            const companyName = document.getElementById('companyName').value.trim();
+            const country = document.getElementById('country').value;
+            const state = document.getElementById('state').value;
+            const city = document.getElementById('city').value;
+            const contactTime = document.querySelector('input[name="contactTime"]:checked').value;
+            const contactDays = document.querySelector('input[name="contactDays"]:checked').value;
+
+            // Location formatting string
+            let locationStr = "";
+            if (country === "UAE") {
+                locationStr = `${state}, UAE`;
+            } else {
+                // Extract State Code (e.g., "Rajasthan, RJ" -> "RJ")
+                const stateCodeMatch = state.match(/,\s*([A-Z]{2})$/);
+                const stateCode = stateCodeMatch ? stateCodeMatch[1] : state;
+                locationStr = `${city}, ${stateCode}`;
+            }
+
+            // Build WhatsApp Message based on format specifications
+            let message = "Hey Udayic Solutions, I would like to have a discussion with you.\n\n";
+            message += `${salutation} ${fullName}\n`;
+
+            if (customerType === "Company") {
+                message += `${companyName} (Company)\n`;
+            } else {
+                message += `Individual\n`;
+            }
+
+            message += `${locationStr}\n`;
+            message += `Contact Preference: ${contactTime}, ${contactDays}`;
+
+            // Encode and redirect to WhatsApp Business API
+            const whatsappNumber = "917240592812"; // e.g. 919876543210
+            const encodedMessage = encodeURIComponent(message);
+            const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
+
+            window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+        }
     </script>
 </body>
 </html>
