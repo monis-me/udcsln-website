@@ -68,10 +68,10 @@
         .col-salutation { width: 35%; }
         .col-name { width: 65%; }
 
-        /* Radio Group - Left Aligned */
+        /* Radio Group - Left Aligned (Input on Left) */
         .radio-group { display: flex; flex-direction: column; gap: 8px; margin-top: 5px; }
-        .radio-group label { font-weight: normal; display: flex; align-items: center; gap: 8px; cursor: pointer; }
-        .radio-group input[type="radio"] { cursor: pointer; accent-color: #333; }
+        .radio-group label { font-weight: normal; display: flex; align-items: center; gap: 8px; cursor: pointer; text-align: left; }
+        .radio-group input[type="radio"] { cursor: pointer; accent-color: #333; margin-right: 0; }
 
         .horizontal-radio { flex-direction: row; gap: 20px; }
         
@@ -122,16 +122,15 @@
                     <label>Full Name & Salutation *</label>
                     <div class="row-group">
                         <div class="col-salutation">
-                            <select id="salutation" required>
+                            <select id="salutation" onchange="markSalutationManual()" required>
                                 <option value="Mr.">Mr.</option>
                                 <option value="Ms.">Ms.</option>
                                 <option value="Mrs.">Mrs.</option>
-                                <option value="Dr.">Dr.</option>
-                                <option value="Prof.">Prof.</option>
+                                <option value="No Title">No Title</option>
                             </select>
                         </div>
                         <div class="col-name">
-                            <input type="text" id="fullName" placeholder="Enter full name" required>
+                            <input type="text" id="fullName" placeholder="Enter full name" oninput="guessSalutation(this.value)" required>
                         </div>
                     </div>
                 </div>
@@ -189,9 +188,10 @@
                 <div class="form-group">
                     <label>Your preferred days to be contacted by us *</label>
                     <div class="radio-group">
-                        <label><input type="radio" name="contactDays" value="Any day of the week (including Saturday and Sunday)" checked> Any day of the week (including Saturday and Sunday)</label>
+                        <label><input type="radio" name="contactDays" value="Any day of the week" checked> Any day of the week</label>
                         <label><input type="radio" name="contactDays" value="Only Monday to Friday"> Only Monday to Friday</label>
                         <label><input type="radio" name="contactDays" value="Only Monday to Saturday"> Only Monday to Saturday</label>
+                        <label><input type="radio" name="contactDays" value="Only Saturday and Sunday"> Only Saturday and Sunday</label>
                     </div>
                 </div>
 
@@ -230,6 +230,31 @@
         const uaeEmirates = [
             "Abu Dhabi", "Ajman", "Dubai", "Fujairah", "Ras Al Khaimah", "Sharjah", "Umm Al Quwain"
         ];
+
+        // --- SMART SALUTATION GUESSING LOGIC ---
+        let manualSalutationOverride = false;
+        
+        function markSalutationManual() {
+            manualSalutationOverride = true;
+        }
+
+        function guessSalutation(nameVal) {
+            if (manualSalutationOverride) return;
+            
+            const cleanName = nameVal.trim().split(" ")[0].toLowerCase();
+            if (!cleanName) return;
+
+            // Common lists for heuristic detection
+            const commonFemaleNames = ["priya", "pooja", "anita", "sunita", "neha", "ritu", "rekha", "sneha", "divya", "swati", "priyanka", "anjali", "geeta", "seema", "meena", "kiran", "nisha", "shweta", "aarti", "deepika", "puja", "shreya", "fatima", "aisha", "mariam"];
+            const commonMaleNames = ["amit", "rahul", "rohit", "sachin", "vikram", "suresh", "rajesh", "manish", "kumar", "ankit", "akash", "sandeep", "deepak", "sunil", "anil", "ajay", "vijay", "sanjay", "manoj", "alok", "mohit", "pankaj", "vikas", "naveen", "karan", "tarun", "varun", "mohammed", "ahmed", "ali"];
+
+            const salutationSelect = document.getElementById('salutation');
+            if (commonFemaleNames.includes(cleanName)) {
+                salutationSelect.value = "Ms.";
+            } else if (commonMaleNames.includes(cleanName)) {
+                salutationSelect.value = "Mr.";
+            }
+        }
 
         // --- INIT & DYNAMIC DROPDOWNS ---
         window.onload = function() {
@@ -320,7 +345,7 @@
                     clearInterval(checkCloudflare);
                     
                     turnstile.render('#turnstile-container', {
-                        sitekey: '0x4AAAAAAFaOzFr3sNQ9_usH', // Replace with your Turnstile Site Key
+                        sitekey: '0x4AAAAAAFaOzFr3sNQ9_usH', // Your Turnstile Site Key
                         theme: 'light',
                         callback: function(token) {
                             turnstileContainer.style.display = 'none';
@@ -360,27 +385,35 @@
             if (country === "UAE") {
                 locationStr = `${state}, UAE`;
             } else {
-                // Extract State Code (e.g., "Rajasthan, RJ" -> "RJ")
                 const stateCodeMatch = state.match(/,\s*([A-Z]{2})$/);
                 const stateCode = stateCodeMatch ? stateCodeMatch[1] : state;
                 locationStr = `${city}, ${stateCode}`;
             }
 
-            // Build WhatsApp Message based on format specifications
-            let message = "Hey Udayic Solutions, I would like to have a discussion with you.\n\n";
-            message += `${salutation} ${fullName}\n`;
-
+            // Build dynamic greeting based on customer type
+            let greetingLine = "";
             if (customerType === "Company") {
-                message += `${companyName} (Company)\n`;
+                greetingLine = "Hello Udayic Solutions,\nI would like to have a business related discussion with you.";
             } else {
-                message += `Individual\n`;
+                greetingLine = "Hello Udayic Solutions,\nI would like to know more about your services.";
             }
 
-            message += `${locationStr}\n`;
-            message += `Contact Preference: ${contactTime}, ${contactDays}`;
+            // Formatting name and title
+            let salutationPart = (salutation !== "No Title") ? `${salutation} ` : "";
+            let nameLine = `${salutationPart}${fullName}`;
+            
+            let typeLine = "";
+            if (customerType === "Company") {
+                typeLine = `${companyName} (Company)`;
+            } else {
+                typeLine = `Individual`;
+            }
 
-            // Encode and redirect to WhatsApp Business API
-            const whatsappNumber = "917240592812"; // e.g. 919876543210
+            // Constructing message layout with exact 4 blank lines
+            let message = `${greetingLine}\n\n\n\n\n${nameLine}\n${typeLine}\n${locationStr}\nContact Preference: ${contactTime}, ${contactDays}`;
+
+            // Encode and redirect to WhatsApp Business API (Replace placeholder with your actual number)
+            const whatsappNumber = "917240592812"; 
             const encodedMessage = encodeURIComponent(message);
             const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
 
